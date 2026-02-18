@@ -26,7 +26,7 @@
 
 <div class="bg-white shadow-sm">
   <div class="container">
-    <ul class="nav nav-tabs py-2">
+    <ul class="nav nav-tabs py-2 flex-nowrap overflow-auto">
       <li class="nav-item"><a class="nav-link" href="/dashboard">Dashboard</a></li>
       <li class="nav-item"><a class="nav-link" href="/donors-page">Donors</a></li>
       <li class="nav-item"><a class="nav-link" href="/programs-page">Programs</a></li>
@@ -37,8 +37,8 @@
 </div>
 
 <main class="flex-fill">
-  <div class="container mt-4">
-    <div class="card shadow">
+  <div class="container my-4">
+    <div class="card shadow-sm">
       <div class="card-header bg-dark text-white">
         <h4>Create New Donation</h4>
       </div>
@@ -46,35 +46,35 @@
 
         <!-- Search Donor -->
         <div class="mb-3">
-          <label>Search Donor by Mobile</label>
+          <label class="form-label">Search Donor by Mobile</label>
           <input type="text" id="mobileSearch" class="form-control">
-          <button class="btn btn-primary mt-2" onclick="searchDonor()">Search</button>
+          <button class="btn btn-primary mt-2" onclick="searchDonor()" type="button">Search</button>
         </div>
 
         <div id="donorInfo" class="alert alert-info d-none"></div>
 
-        <form method="POST" action="/donations/new">
+        <form method="POST" action="/donations/new" class="needs-validation" novalidate>
           <input type="hidden" name="donor_id" id="donor_id">
 
           <div class="mb-3">
-            <label>Donation Amount</label>
+            <label class="form-label">Donation Amount</label>
             <input type="number" name="donation_amount" class="form-control" required>
           </div>
 
           <div class="mb-3">
-            <label>Date of Donation</label>
+            <label class="form-label">Date of Donation</label>
             <input type="date" name="donation_date" class="form-control" required>
           </div>
 
           <div class="mb-3">
-            <label>Program</label>
+            <label class="form-label">Program</label>
             <select name="program_id" id="programDropdown" class="form-select" required>
               <option value="">Select Program</option>
             </select>
           </div>
 
           <div class="mb-3">
-            <label>Mode of Payment</label>
+            <label class="form-label">Mode of Payment</label>
             <select name="payment_mode" class="form-select">
               <option>Cash</option>
               <option>NEFT</option>
@@ -83,14 +83,13 @@
           </div>
 
           <div class="mb-3">
-            <label>Remarks</label>
+            <label class="form-label">Remarks</label>
             <textarea name="remarks" class="form-control"></textarea>
           </div>
 
           <button type="submit" class="btn btn-success">Save Donation</button>
           <a href="/donations-page" class="btn btn-secondary">Cancel</a>
         </form>
-
       </div>
     </div>
   </div>
@@ -105,19 +104,18 @@
 function searchDonor() {
   let mobile = document.getElementById("mobileSearch").value;
   fetch(`/donors/search?mobile=${mobile}`)
-  .then(res => res.json())
-  .then(data => {
-    if(data.length > 0) {
-      let d = data[0];
-      document.getElementById("donor_id").value = d.id;
-      let info = `<strong>${d.first_name} ${d.last_name}</strong><br>Email: ${d.email}<br>Donor ID: ${d.donor_id}`;
-      let div = document.getElementById("donorInfo");
-      div.innerHTML = info;
-      div.classList.remove("d-none");
-    } else {
-      alert("Donor not found");
-    }
-  });
+    .then(res => res.json())
+    .then(data => {
+      if (data.length > 0) {
+        let d = data[0];
+        document.getElementById("donor_id").value = d.id;
+        let div = document.getElementById("donorInfo");
+        div.innerHTML = `<strong>${d.first_name} ${d.last_name}</strong><br>Email: ${d.email}<br>Donor ID: ${d.donor_id}`;
+        div.classList.remove("d-none");
+      } else {
+        alert("Donor not found");
+      }
+    });
 }
 
 fetch('/programs')
