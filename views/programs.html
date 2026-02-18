@@ -8,6 +8,8 @@
 <link rel="stylesheet" href="/css/style.css">
 <style>
 .program-card { margin-bottom: 1rem; }
+@media(min-width:768px){ .card-view-only { display:none; } }
+@media(max-width:767px){ .table-view-only { display:none; } }
 </style>
 </head>
 <body class="d-flex flex-column min-vh-100 bg-light">
@@ -82,19 +84,18 @@ const programCards = document.getElementById('programCards');
 const viewToggle = document.getElementById('viewToggle');
 let programsData = [];
 
-// Format date DD-MM-YYYY
+// Function to format date as DD-MM-YYYY
 function formatDate(dateStr) {
   if (!dateStr) return '';
   const date = new Date(dateStr);
   const dd = String(date.getDate()).padStart(2, '0');
-  const mm = String(date.getMonth() + 1).padStart(2, '0');
+  const mm = String(date.getMonth() + 1).padStart(2, '0'); // Months are 0-based
   const yyyy = date.getFullYear();
   return `${dd}-${mm}-${yyyy}`;
 }
 
-// Render both table and card views
+// Render programs in table and card views
 function renderPrograms() {
-  // Table
   programTable.innerHTML = programsData.map(p => `
     <tr>
       <td>${p.program_name}</td>
@@ -103,7 +104,6 @@ function renderPrograms() {
     </tr>
   `).join('');
 
-  // Card
   programCards.innerHTML = programsData.map(p => `
     <div class="col-12 col-md-6 col-lg-4">
       <div class="card program-card shadow-sm">
@@ -117,31 +117,25 @@ function renderPrograms() {
   `).join('');
 }
 
-// Fetch programs data
+// Fetch programs data from server
 fetch('/programs-list')
 .then(res => res.json())
 .then(data => { programsData = data; renderPrograms(); });
 
-// Toggle view
-viewToggle.addEventListener('change', () => {
+// Toggle between table and card views
+viewToggle.addEventListener('change', ()=>{
   if(viewToggle.checked){
-    // Show table, hide cards
-    document.querySelector('.table-view-only').style.display = 'block';
-    programCards.style.display = 'none';
+    document.querySelector('.table-view-only').style.display='block';
+    document.querySelector('.card-view-only').style.display='none';
   } else {
-    // Show cards, hide table
-    document.querySelector('.table-view-only').style.display = 'none';
-    programCards.style.display = 'flex';
-    programCards.style.flexWrap = 'wrap';
-    programCards.style.gap = '1rem';
+    document.querySelector('.table-view-only').style.display='none';
+    document.querySelector('.card-view-only').style.display='flex';
   }
 });
 
-// Default view: Card
-document.querySelector('.table-view-only').style.display = 'none';
-programCards.style.display = 'flex';
-programCards.style.flexWrap = 'wrap';
-programCards.style.gap = '1rem';
+// Default view
+document.querySelector('.table-view-only').style.display='none';
+document.querySelector('.card-view-only').style.display='flex';
 </script>
 
 </body>
