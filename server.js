@@ -190,13 +190,14 @@ app.get("/donors/search", isAuthenticated, async (req, res) => {
 });
 
 // ===============================
-// PROGRAMS API
+// PROGRAMS API (UPDATED)
 // ===============================
 
+// Fetch all programs
 app.get("/programs", isAuthenticated, async (req, res) => {
   try {
     const result = await pool.query(
-      "SELECT * FROM programs ORDER BY id DESC"
+      "SELECT id, program_name, description, program_date, created_at FROM programs ORDER BY id DESC"
     );
     res.json(result.rows);
   } catch (err) {
@@ -205,15 +206,15 @@ app.get("/programs", isAuthenticated, async (req, res) => {
   }
 });
 
+// Create new program (save program_date too)
 app.post("/programs/new", isAuthenticated, async (req, res) => {
-  const { program_name, description } = req.body;
+  const { program_name, description, program_date } = req.body;
 
   try {
     await pool.query(
-      "INSERT INTO programs (program_name, description) VALUES ($1,$2)",
-      [program_name, description]
+      "INSERT INTO programs (program_name, description, program_date) VALUES ($1,$2,$3)",
+      [program_name, description, program_date]
     );
-
     res.redirect("/programs-page");
   } catch (err) {
     console.error(err);
