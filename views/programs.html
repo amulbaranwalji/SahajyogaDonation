@@ -14,7 +14,6 @@
 </head>
 <body class="d-flex flex-column min-vh-100 bg-light">
 
-<!-- Header & Tabs -->
 <nav class="navbar navbar-expand-lg navbar-dark bg-dark px-4">
   <a class="navbar-brand" href="/dashboard">Donor App</a>
   <div class="ms-auto dropdown">
@@ -85,18 +84,20 @@ const programCards = document.getElementById('programCards');
 const viewToggle = document.getElementById('viewToggle');
 let programsData = [];
 
-// Convert date to DD-MM-YYYY
+// Format ISO date to DD-MM-YYYY
 function formatDate(dateStr) {
   if (!dateStr) return '';
   const date = new Date(dateStr);
-  const dd = String(date.getDate()).padStart(2, '0');
-  const mm = String(date.getMonth() + 1).padStart(2, '0'); // Months are 0-based
+  const dd = String(date.getDate()).padStart(2,'0');
+  const mm = String(date.getMonth()+1).padStart(2,'0');
   const yyyy = date.getFullYear();
   return `${dd}-${mm}-${yyyy}`;
 }
 
-// Render table and card views
+// Render Table and Card view
 function renderPrograms() {
+  if (!Array.isArray(programsData)) return;
+
   programTable.innerHTML = programsData.map(p => `
     <tr>
       <td>${p.program_name}</td>
@@ -120,33 +121,29 @@ function renderPrograms() {
   `).join('');
 }
 
-// Fetch programs list
-fetch('/programs-list')
+// Fetch programs from backend
+fetch('/programs') // 🔥 Correct endpoint
 .then(res => res.json())
 .then(data => { 
-  if(Array.isArray(data)){
-    programsData = data; 
-    renderPrograms();
-  } else {
-    console.error("Programs data is not an array:", data);
-  }
+  programsData = data;
+  renderPrograms();
 })
-.catch(err => console.error("Error fetching programs:", err));
+.catch(err => console.error('Error fetching programs:', err));
 
-// Toggle between table and card views
-viewToggle.addEventListener('change', () => {
+// Toggle views
+viewToggle.addEventListener('change', ()=>{
   if(viewToggle.checked){
-    document.querySelector('.table-view-only').style.display = 'block';
-    document.querySelector('.card-view-only').style.display = 'none';
+    document.querySelector('.table-view-only').style.display='block';
+    document.querySelector('.card-view-only').style.display='none';
   } else {
-    document.querySelector('.table-view-only').style.display = 'none';
-    document.querySelector('.card-view-only').style.display = 'flex';
+    document.querySelector('.table-view-only').style.display='none';
+    document.querySelector('.card-view-only').style.display='flex';
   }
 });
 
-// Default view: Card
-document.querySelector('.table-view-only').style.display = 'none';
-document.querySelector('.card-view-only').style.display = 'flex';
+// Default: show Card view
+document.querySelector('.table-view-only').style.display='none';
+document.querySelector('.card-view-only').style.display='flex';
 </script>
 
 </body>
