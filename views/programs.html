@@ -62,6 +62,7 @@
           <th>Program Name</th>
           <th>Description</th>
           <th>Program Date</th>
+          <th>Created At</th>
         </tr>
       </thead>
       <tbody id="programTable"></tbody>
@@ -84,7 +85,7 @@ const programCards = document.getElementById('programCards');
 const viewToggle = document.getElementById('viewToggle');
 let programsData = [];
 
-// Function to format date as DD-MM-YYYY
+// Convert date to DD-MM-YYYY
 function formatDate(dateStr) {
   if (!dateStr) return '';
   const date = new Date(dateStr);
@@ -94,13 +95,14 @@ function formatDate(dateStr) {
   return `${dd}-${mm}-${yyyy}`;
 }
 
-// Render programs in table and card views
+// Render table and card views
 function renderPrograms() {
   programTable.innerHTML = programsData.map(p => `
     <tr>
       <td>${p.program_name}</td>
-      <td>${p.description}</td>
+      <td>${p.description || ''}</td>
       <td>${formatDate(p.program_date)}</td>
+      <td>${formatDate(p.created_at)}</td>
     </tr>
   `).join('');
 
@@ -109,33 +111,42 @@ function renderPrograms() {
       <div class="card program-card shadow-sm">
         <div class="card-body">
           <h5 class="card-title">${p.program_name}</h5>
-          <p>Description: ${p.description}</p>
+          <p>Description: ${p.description || ''}</p>
           <p>Program Date: ${formatDate(p.program_date)}</p>
+          <p>Created At: ${formatDate(p.created_at)}</p>
         </div>
       </div>
     </div>
   `).join('');
 }
 
-// Fetch programs data from server
+// Fetch programs list
 fetch('/programs-list')
 .then(res => res.json())
-.then(data => { programsData = data; renderPrograms(); });
+.then(data => { 
+  if(Array.isArray(data)){
+    programsData = data; 
+    renderPrograms();
+  } else {
+    console.error("Programs data is not an array:", data);
+  }
+})
+.catch(err => console.error("Error fetching programs:", err));
 
 // Toggle between table and card views
-viewToggle.addEventListener('change', ()=>{
+viewToggle.addEventListener('change', () => {
   if(viewToggle.checked){
-    document.querySelector('.table-view-only').style.display='block';
-    document.querySelector('.card-view-only').style.display='none';
+    document.querySelector('.table-view-only').style.display = 'block';
+    document.querySelector('.card-view-only').style.display = 'none';
   } else {
-    document.querySelector('.table-view-only').style.display='none';
-    document.querySelector('.card-view-only').style.display='flex';
+    document.querySelector('.table-view-only').style.display = 'none';
+    document.querySelector('.card-view-only').style.display = 'flex';
   }
 });
 
-// Default view
-document.querySelector('.table-view-only').style.display='none';
-document.querySelector('.card-view-only').style.display='flex';
+// Default view: Card
+document.querySelector('.table-view-only').style.display = 'none';
+document.querySelector('.card-view-only').style.display = 'flex';
 </script>
 
 </body>
