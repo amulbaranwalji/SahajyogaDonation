@@ -86,13 +86,22 @@ const donationCards = document.getElementById('donationCards');
 const viewToggle = document.getElementById('viewToggle');
 let donationsData = [];
 
+// Function to convert date to DD-MM-YYYY
+function formatDate(dateStr) {
+  const date = new Date(dateStr);
+  const dd = String(date.getDate()).padStart(2, '0');
+  const mm = String(date.getMonth() + 1).padStart(2, '0'); // Months are 0-based
+  const yyyy = date.getFullYear();
+  return `${dd}-${mm}-${yyyy}`;
+}
+
 function renderDonations(){
   donationTable.innerHTML = donationsData.map(d => `
     <tr>
       <td>${d.first_name} ${d.last_name}</td>
       <td>${d.program_name}</td>
       <td>₹ ${d.donation_amount}</td>
-      <td>${d.donation_date}</td>
+      <td>${formatDate(d.donation_date)}</td>
       <td>${d.payment_mode}</td>
     </tr>
   `).join('');
@@ -104,7 +113,7 @@ function renderDonations(){
           <h5 class="card-title">${d.first_name} ${d.last_name}</h5>
           <p>Program: ${d.program_name}</p>
           <p>Amount: ₹ ${d.donation_amount}</p>
-          <p>Date: ${d.donation_date}</p>
+          <p>Date: ${formatDate(d.donation_date)}</p>
           <p>Payment: ${d.payment_mode}</p>
         </div>
       </div>
@@ -126,6 +135,7 @@ viewToggle.addEventListener('change', ()=>{
   }
 });
 
+// Default view
 document.querySelector('.table-view-only').style.display='none';
 document.querySelector('.card-view-only').style.display='flex';
 </script>
