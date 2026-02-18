@@ -8,8 +8,6 @@
 <link rel="stylesheet" href="/css/style.css">
 <style>
 .program-card { margin-bottom: 1rem; }
-@media(min-width:768px){ .card-view-only { display:none; } }
-@media(max-width:767px){ .table-view-only { display:none; } }
 </style>
 </head>
 <body class="d-flex flex-column min-vh-100 bg-light">
@@ -62,7 +60,6 @@
           <th>Program Name</th>
           <th>Description</th>
           <th>Program Date</th>
-          <th>Status</th>
         </tr>
       </thead>
       <tbody id="programTable"></tbody>
@@ -85,27 +82,28 @@ const programCards = document.getElementById('programCards');
 const viewToggle = document.getElementById('viewToggle');
 let programsData = [];
 
-// Function to format date as DD-MM-YYYY
+// Format date DD-MM-YYYY
 function formatDate(dateStr) {
   if (!dateStr) return '';
   const date = new Date(dateStr);
   const dd = String(date.getDate()).padStart(2, '0');
-  const mm = String(date.getMonth() + 1).padStart(2, '0'); // Months are 0-based
+  const mm = String(date.getMonth() + 1).padStart(2, '0');
   const yyyy = date.getFullYear();
   return `${dd}-${mm}-${yyyy}`;
 }
 
-// Render programs in table and card views
+// Render both table and card views
 function renderPrograms() {
+  // Table
   programTable.innerHTML = programsData.map(p => `
     <tr>
       <td>${p.program_name}</td>
       <td>${p.description}</td>
       <td>${formatDate(p.program_date)}</td>
-      <td>${p.status}</td>
     </tr>
   `).join('');
 
+  // Card
   programCards.innerHTML = programsData.map(p => `
     <div class="col-12 col-md-6 col-lg-4">
       <div class="card program-card shadow-sm">
@@ -113,32 +111,37 @@ function renderPrograms() {
           <h5 class="card-title">${p.program_name}</h5>
           <p>Description: ${p.description}</p>
           <p>Program Date: ${formatDate(p.program_date)}</p>
-          <p>Status: ${p.status}</p>
         </div>
       </div>
     </div>
   `).join('');
 }
 
-// Fetch programs data from server
+// Fetch programs data
 fetch('/programs-list')
 .then(res => res.json())
 .then(data => { programsData = data; renderPrograms(); });
 
-// Toggle between table and card views
+// Toggle view
 viewToggle.addEventListener('change', () => {
   if(viewToggle.checked){
+    // Show table, hide cards
     document.querySelector('.table-view-only').style.display = 'block';
-    document.querySelector('.card-view-only').style.display = 'none';
+    programCards.style.display = 'none';
   } else {
+    // Show cards, hide table
     document.querySelector('.table-view-only').style.display = 'none';
-    document.querySelector('.card-view-only').style.display = 'flex';
+    programCards.style.display = 'flex';
+    programCards.style.flexWrap = 'wrap';
+    programCards.style.gap = '1rem';
   }
 });
 
-// Default view
+// Default view: Card
 document.querySelector('.table-view-only').style.display = 'none';
-document.querySelector('.card-view-only').style.display = 'flex';
+programCards.style.display = 'flex';
+programCards.style.flexWrap = 'wrap';
+programCards.style.gap = '1rem';
 </script>
 
 </body>
