@@ -42,11 +42,12 @@
 <main class="flex-fill">
 <div class="container my-4">
 
-  <div class="d-flex justify-content-between align-items-center mb-3">
-    <h3>Programs</h3>
-    <div>
-      <a href="/new-program-page" class="btn btn-success me-3">New Program</a>
-      <div class="form-check form-switch d-inline">
+  <div class="row align-items-center mb-3">
+    <div class="col-12 col-md-6 mb-2 mb-md-0">
+      <a href="/new-program-page" class="btn btn-success w-100">New Program</a>
+    </div>
+    <div class="col-12 col-md-6 text-md-end">
+      <div class="form-check form-switch d-inline-block">
         <input class="form-check-input" type="checkbox" id="viewToggle">
         <label class="form-check-label" for="viewToggle">Table View</label>
       </div>
@@ -81,11 +82,9 @@
 const programTable = document.getElementById('programTable');
 const programCards = document.getElementById('programCards');
 const viewToggle = document.getElementById('viewToggle');
-
 let programsData = [];
 
 function renderPrograms(){
-  // Table
   programTable.innerHTML = programsData.map(p => `
     <tr>
       <td>${p.program_name}</td>
@@ -93,7 +92,6 @@ function renderPrograms(){
     </tr>
   `).join('');
 
-  // Cards
   programCards.innerHTML = programsData.map(p => `
     <div class="col-12 col-md-6 col-lg-4">
       <div class="card program-card shadow-sm">
@@ -106,12 +104,10 @@ function renderPrograms(){
   `).join('');
 }
 
-// Fetch programs
 fetch('/programs')
   .then(res=>res.json())
   .then(data=>{ programsData = data; renderPrograms(); });
 
-// Toggle view
 viewToggle.addEventListener('change', ()=>{
   if(viewToggle.checked){
     document.querySelector('.table-view-only').style.display='block';
@@ -122,7 +118,6 @@ viewToggle.addEventListener('change', ()=>{
   }
 });
 
-// Default card view
 document.querySelector('.table-view-only').style.display='none';
 document.querySelector('.card-view-only').style.display='flex';
 </script>
