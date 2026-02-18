@@ -8,7 +8,8 @@
 <link rel="stylesheet" href="/css/style.css">
 <style>
 .program-card { margin-bottom: 1rem; }
-@media(min-width:768px){ .card-view-only { display:none; } }
+.card-view-only { display: flex; flex-wrap: wrap; gap: 1rem; }
+@media(min-width:768px){ .card-view-only { display:flex; } .table-view-only { display:none; } }
 @media(max-width:767px){ .table-view-only { display:none; } }
 </style>
 </head>
@@ -16,11 +17,13 @@
 
 <!-- Header & Tabs -->
 <nav class="navbar navbar-expand-lg navbar-dark bg-dark px-4">
-  <a class="navbar-brand" href="/dashboard">Donor App</a>
+  <a class="navbar-brand d-flex align-items-center" href="/dashboard">
+    <img src="/images/logo.png" width="40" height="40" class="me-2">Donor App
+  </a>
   <div class="ms-auto dropdown">
-    <a class="text-white dropdown-toggle" href="#" data-bs-toggle="dropdown">Welcome</a>
+    <a class="text-white dropdown-toggle text-decoration-none" href="#" data-bs-toggle="dropdown">Welcome</a>
     <ul class="dropdown-menu dropdown-menu-end">
-      <li><a class="dropdown-item" href="/profile-page">Profile</a></li>
+      <li><a class="dropdown-item" href="/profile-page">View Profile</a></li>
       <li><hr class="dropdown-divider"></li>
       <li><a class="dropdown-item text-danger" href="/logout">Logout</a></li>
     </ul>
@@ -61,6 +64,7 @@
         <tr>
           <th>Name</th>
           <th>Description</th>
+          <th>Program Date</th>
         </tr>
       </thead>
       <tbody id="programTable"></tbody>
@@ -79,24 +83,40 @@
 
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
 <script>
+// Helpers
+function formatDate(dateStr) {
+  if (!dateStr) return '-';
+  const d = new Date(dateStr);
+  const day = String(d.getDate()).padStart(2,'0');
+  const month = String(d.getMonth()+1).padStart(2,'0');
+  const year = d.getFullYear();
+  return `${day}-${month}-${year}`;
+}
+
+// DOM Elements
 const programTable = document.getElementById('programTable');
 const programCards = document.getElementById('programCards');
 const viewToggle = document.getElementById('viewToggle');
 let programsData = [];
 
+// Render Function
 function renderPrograms(){
+  // Table
   programTable.innerHTML = programsData.map(p => `
     <tr>
       <td>${p.program_name}</td>
       <td>${p.description || '-'}</td>
+      <td>${formatDate(p.program_date)}</td>
     </tr>
   `).join('');
 
+  // Cards
   programCards.innerHTML = programsData.map(p => `
     <div class="col-12 col-md-6 col-lg-4">
       <div class="card program-card shadow-sm">
         <div class="card-body">
           <h5 class="card-title">${p.program_name}</h5>
+          <p class="card-text mb-1"><strong>Date:</strong> ${formatDate(p.program_date)}</p>
           <p class="card-text">${p.description || '-'}</p>
         </div>
       </div>
@@ -104,10 +124,12 @@ function renderPrograms(){
   `).join('');
 }
 
+// Fetch Programs
 fetch('/programs')
-  .then(res=>res.json())
-  .then(data=>{ programsData = data; renderPrograms(); });
+  .then(res => res.json())
+  .then(data => { programsData = data; renderPrograms(); });
 
+// Toggle View
 viewToggle.addEventListener('change', ()=>{
   if(viewToggle.checked){
     document.querySelector('.table-view-only').style.display='block';
@@ -118,8 +140,10 @@ viewToggle.addEventListener('change', ()=>{
   }
 });
 
+// Initial State
 document.querySelector('.table-view-only').style.display='none';
 document.querySelector('.card-view-only').style.display='flex';
 </script>
+
 </body>
 </html>
