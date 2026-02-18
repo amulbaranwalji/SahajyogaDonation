@@ -8,6 +8,7 @@
 <link rel="stylesheet" href="/css/style.css">
 <style>
 .donation-card { margin-bottom: 1rem; }
+/* Hide card on desktop, table on mobile by default */
 @media(min-width:768px){ .card-view-only { display:none; } }
 @media(max-width:767px){ .table-view-only { display:none; } }
 </style>
@@ -95,6 +96,7 @@ function formatDate(dateStr) {
   return `${dd}-${mm}-${yyyy}`;
 }
 
+// Render donations in table and card views
 function renderDonations(){
   donationTable.innerHTML = donationsData.map(d => `
     <tr>
@@ -121,10 +123,12 @@ function renderDonations(){
   `).join('');
 }
 
+// Fetch donations data from server
 fetch('/donations-list')
 .then(res => res.json())
 .then(data => { donationsData = data; renderDonations(); });
 
+// Toggle between table and card views manually
 viewToggle.addEventListener('change', ()=>{
   if(viewToggle.checked){
     document.querySelector('.table-view-only').style.display='block';
@@ -135,9 +139,24 @@ viewToggle.addEventListener('change', ()=>{
   }
 });
 
-// Default view
-document.querySelector('.table-view-only').style.display='none';
-document.querySelector('.card-view-only').style.display='flex';
+// Set default view based on screen width
+function setDefaultView() {
+  if (window.innerWidth >= 768) {
+    // Desktop: Table view
+    viewToggle.checked = true;
+    document.querySelector('.table-view-only').style.display='block';
+    document.querySelector('.card-view-only').style.display='none';
+  } else {
+    // Mobile: Card view
+    viewToggle.checked = false;
+    document.querySelector('.table-view-only').style.display='none';
+    document.querySelector('.card-view-only').style.display='flex';
+  }
+}
+
+// Apply default view on load and resize
+window.addEventListener('resize', setDefaultView);
+setDefaultView();
 </script>
 
 </body>
