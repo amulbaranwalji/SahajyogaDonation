@@ -26,7 +26,7 @@
 
 <div class="bg-white shadow-sm">
   <div class="container">
-    <ul class="nav nav-tabs py-2">
+    <ul class="nav nav-tabs py-2 flex-nowrap overflow-auto">
       <li class="nav-item"><a class="nav-link" href="/dashboard">Dashboard</a></li>
       <li class="nav-item"><a class="nav-link" href="/donors-page">Donors</a></li>
       <li class="nav-item"><a class="nav-link" href="/programs-page">Programs</a></li>
@@ -37,43 +37,42 @@
 </div>
 
 <main class="flex-fill">
-  <div class="container mt-4">
-    <div class="card shadow">
+  <div class="container my-4">
+    <div class="card shadow-sm">
       <div class="card-header bg-dark text-white">
         <h4>Create New Expense</h4>
       </div>
       <div class="card-body">
-        <form method="POST" action="/expenses/new">
-
+        <form method="POST" action="/expenses/new" class="needs-validation" novalidate>
           <div class="mb-3">
-            <label>Program</label>
+            <label class="form-label">Program</label>
             <select name="program_id" id="programDropdown" class="form-select" required>
               <option value="">Select Program</option>
             </select>
           </div>
 
           <div class="mb-3">
-            <label>Expense Amount</label>
+            <label class="form-label">Expense Amount</label>
             <input type="number" name="expense_amount" class="form-control" required>
           </div>
 
           <div class="mb-3">
-            <label>Expense Date</label>
+            <label class="form-label">Expense Date</label>
             <input type="date" name="expense_date" class="form-control" required>
           </div>
 
           <div class="mb-3">
-            <label>Description</label>
+            <label class="form-label">Description</label>
             <textarea name="expense_description" class="form-control"></textarea>
           </div>
 
           <div class="mb-3">
-            <label>Submitted By</label>
+            <label class="form-label">Submitted By</label>
             <input type="text" name="submitted_by" class="form-control">
           </div>
 
           <div class="mb-3">
-            <label>Status</label>
+            <label class="form-label">Status</label>
             <select name="status" class="form-select">
               <option>Cash Paid</option>
               <option>Cheque Paid</option>
@@ -82,7 +81,7 @@
           </div>
 
           <div class="mb-3">
-            <label>Remarks</label>
+            <label class="form-label">Remarks</label>
             <textarea name="remarks" class="form-control"></textarea>
           </div>
 
@@ -104,13 +103,4 @@ fetch('/programs')
 .then(res => res.json())
 .then(data => {
   let dropdown = document.getElementById("programDropdown");
-  data.forEach(p => {
-    let option = document.createElement("option");
-    option.value = p.id;
-    option.text = p.program_name;
-    dropdown.appendChild(option);
-  });
-});
-</script>
-</body>
-</html>
+  data.forEach
