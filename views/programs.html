@@ -8,12 +8,13 @@
 <link rel="stylesheet" href="/css/style.css">
 <style>
 .program-card { margin-bottom: 1rem; }
-@media(min-width:768px){ .card-view-only { display:none; } }
-@media(max-width:767px){ .table-view-only { display:none; } }
+@media(min-width:768px){ .card-view-only { display:none; } } /* Card hidden on desktop */
+@media(max-width:767px){ .table-view-only { display:none; } } /* Table hidden on mobile */
 </style>
 </head>
 <body class="d-flex flex-column min-vh-100 bg-light">
 
+<!-- Header & Tabs -->
 <nav class="navbar navbar-expand-lg navbar-dark bg-dark px-4">
   <a class="navbar-brand" href="/dashboard">Donor App</a>
   <div class="ms-auto dropdown">
@@ -61,7 +62,6 @@
           <th>Program Name</th>
           <th>Description</th>
           <th>Program Date</th>
-          <th>Created At</th>
         </tr>
       </thead>
       <tbody id="programTable"></tbody>
@@ -84,26 +84,23 @@ const programCards = document.getElementById('programCards');
 const viewToggle = document.getElementById('viewToggle');
 let programsData = [];
 
-// Format ISO date to DD-MM-YYYY
+// Format date as DD-MM-YYYY
 function formatDate(dateStr) {
   if (!dateStr) return '';
   const date = new Date(dateStr);
-  const dd = String(date.getDate()).padStart(2,'0');
-  const mm = String(date.getMonth()+1).padStart(2,'0');
+  const dd = String(date.getDate()).padStart(2, '0');
+  const mm = String(date.getMonth() + 1).padStart(2, '0'); // Months are 0-based
   const yyyy = date.getFullYear();
   return `${dd}-${mm}-${yyyy}`;
 }
 
-// Render Table and Card view
+// Render programs in table and card views
 function renderPrograms() {
-  if (!Array.isArray(programsData)) return;
-
   programTable.innerHTML = programsData.map(p => `
     <tr>
       <td>${p.program_name}</td>
-      <td>${p.description || ''}</td>
+      <td>${p.description}</td>
       <td>${formatDate(p.program_date)}</td>
-      <td>${formatDate(p.created_at)}</td>
     </tr>
   `).join('');
 
@@ -112,38 +109,47 @@ function renderPrograms() {
       <div class="card program-card shadow-sm">
         <div class="card-body">
           <h5 class="card-title">${p.program_name}</h5>
-          <p>Description: ${p.description || ''}</p>
+          <p>Description: ${p.description}</p>
           <p>Program Date: ${formatDate(p.program_date)}</p>
-          <p>Created At: ${formatDate(p.created_at)}</p>
         </div>
       </div>
     </div>
   `).join('');
 }
 
-// Fetch programs from backend
-fetch('/programs') // 🔥 Correct endpoint
+// Fetch programs data from server
+fetch('/programs')
 .then(res => res.json())
-.then(data => { 
-  programsData = data;
-  renderPrograms();
-})
-.catch(err => console.error('Error fetching programs:', err));
+.then(data => { programsData = data; renderPrograms(); });
 
-// Toggle views
-viewToggle.addEventListener('change', ()=>{
+// Toggle between table and card views
+viewToggle.addEventListener('change', () => {
   if(viewToggle.checked){
-    document.querySelector('.table-view-only').style.display='block';
-    document.querySelector('.card-view-only').style.display='none';
+    document.querySelector('.table-view-only').style.display = 'block';
+    document.querySelector('.card-view-only').style.display = 'none';
   } else {
-    document.querySelector('.table-view-only').style.display='none';
-    document.querySelector('.card-view-only').style.display='flex';
+    document.querySelector('.table-view-only').style.display = 'none';
+    document.querySelector('.card-view-only').style.display = 'flex';
   }
 });
 
-// Default: show Card view
-document.querySelector('.table-view-only').style.display='none';
-document.querySelector('.card-view-only').style.display='flex';
+// Default view based on screen size
+function setDefaultView() {
+  if (window.innerWidth >= 768) {
+    // Desktop: Table view
+    viewToggle.checked = true;
+    document.querySelector('.table-view-only').style.display = 'block';
+    document.querySelector('.card-view-only').style.display = 'none';
+  } else {
+    // Mobile: Card view
+    viewToggle.checked = false;
+    document.querySelector('.table-view-only').style.display = 'none';
+    document.querySelector('.card-view-only').style.display = 'flex';
+  }
+}
+
+window.addEventListener('resize', setDefaultView);
+setDefaultView();
 </script>
 
 </body>
