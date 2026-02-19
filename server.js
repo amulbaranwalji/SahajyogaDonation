@@ -25,11 +25,13 @@ const pool = new Pool({
 // ===============================
 app.use(express.urlencoded({ extended: true }));
 app.use(express.json());
+
 app.use(session({
   secret: process.env.SESSION_SECRET || "mysecret",
   resave: false,
   saveUninitialized: false
 }));
+
 app.use(express.static(path.join(__dirname, "public")));
 
 // ===============================
@@ -43,29 +45,69 @@ function isAuthenticated(req, res, next) {
 // ===============================
 // PAGE ROUTES
 // ===============================
-app.get("/", (req, res) => res.sendFile(path.join(__dirname, "views", "donorlogin.html")));
-app.get("/dashboard", isAuthenticated, (req, res) => res.sendFile(path.join(__dirname, "views", "dashboard.html")));
-app.get("/donors-page", isAuthenticated, (req, res) => res.sendFile(path.join(__dirname, "views", "donors.html")));
-app.get("/new-donor-page", isAuthenticated, (req, res) => res.sendFile(path.join(__dirname, "views", "new-donor.html")));
-app.get("/programs-page", isAuthenticated, (req, res) => res.sendFile(path.join(__dirname, "views", "programs.html")));
-app.get("/new-program-page", isAuthenticated, (req, res) => res.sendFile(path.join(__dirname, "views", "new-program.html")));
-app.get("/donations-page", isAuthenticated, (req, res) => res.sendFile(path.join(__dirname, "views", "donations.html")));
-app.get("/new-donation-page", isAuthenticated, (req, res) => res.sendFile(path.join(__dirname, "views", "new-donation.html")));
-app.get("/expenses-page", isAuthenticated, (req, res) => res.sendFile(path.join(__dirname, "views", "expenses.html")));
-app.get("/new-expense-page", isAuthenticated, (req, res) => res.sendFile(path.join(__dirname, "views", "new-expense.html")));
+app.get("/", (req, res) =>
+  res.sendFile(path.join(__dirname, "views", "donorlogin.html"))
+);
+
+app.get("/dashboard", isAuthenticated, (req, res) =>
+  res.sendFile(path.join(__dirname, "views", "dashboard.html"))
+);
+
+app.get("/donors-page", isAuthenticated, (req, res) =>
+  res.sendFile(path.join(__dirname, "views", "donors.html"))
+);
+
+app.get("/new-donor-page", isAuthenticated, (req, res) =>
+  res.sendFile(path.join(__dirname, "views", "new-donor.html"))
+);
+
+app.get("/programs-page", isAuthenticated, (req, res) =>
+  res.sendFile(path.join(__dirname, "views", "programs.html"))
+);
+
+app.get("/new-program-page", isAuthenticated, (req, res) =>
+  res.sendFile(path.join(__dirname, "views", "new-program.html"))
+);
+
+app.get("/donations-page", isAuthenticated, (req, res) =>
+  res.sendFile(path.join(__dirname, "views", "donations.html"))
+);
+
+app.get("/new-donation-page", isAuthenticated, (req, res) =>
+  res.sendFile(path.join(__dirname, "views", "new-donation.html"))
+);
+
+app.get("/expenses-page", isAuthenticated, (req, res) =>
+  res.sendFile(path.join(__dirname, "views", "expenses.html"))
+);
+
+app.get("/new-expense-page", isAuthenticated, (req, res) =>
+  res.sendFile(path.join(__dirname, "views", "new-expense.html"))
+);
 
 // ===============================
 // LOGIN / LOGOUT
 // ===============================
 app.post("/login", async (req, res) => {
   const { username, password } = req.body;
+
   try {
-    const result = await pool.query("SELECT * FROM admins WHERE username=$1", [username]);
-    if (result.rows.length === 0) return res.send("Invalid username");
+    const result = await pool.query(
+      "SELECT * FROM admins WHERE username=$1",
+      [username]
+    );
+
+    if (result.rows.length === 0)
+      return res.send("Invalid username");
+
     const user = result.rows[0];
-    if (password !== user.password) return res.send("Invalid password");
+
+    if (password !== user.password)
+      return res.send("Invalid password");
+
     req.session.user = user;
     res.redirect("/dashboard");
+
   } catch (err) {
     console.error(err);
     res.send("Login error");
@@ -77,7 +119,7 @@ app.get("/logout", (req, res) => {
 });
 
 // ===============================
-// DONORS (UPDATED WITH SEARCH)
+// DONORS
 // ===============================
 app.get("/donors", isAuthenticated, async (req, res) => {
   const page = parseInt(req.query.page) || 1;
@@ -86,8 +128,7 @@ app.get("/donors", isAuthenticated, async (req, res) => {
   const offset = (page - 1) * limit;
 
   try {
-    let query = "SELECT * FROM donors";
-    let countQuery = "SELECT COUNT(*) FROM donors";
+    let baseQuery = "FROM donors";
     let values = [];
     let whereClause = "";
 
@@ -100,10 +141,17 @@ app.get("/donors", isAuthenticated, async (req, res) => {
       values.push(`%${search}%`);
     }
 
-    query += ` ${whereClause} ORDER BY id DESC LIMIT $${values.length + 1} OFFSET $${values.length + 2}`;
+    const finalQuery = `
+      SELECT * ${baseQuery}
+      ${whereClause}
+      ORDER BY id DESC
+      LIMIT $${values.length + 1}
+      OFFSET $${values.length + 2}
+    `;
+
     values.push(limit, offset);
 
-    const result = await pool.query(query, values);
+    const result = await pool.query(finalQuery, values);
     res.json(result.rows);
 
   } catch (err) {
@@ -112,20 +160,20 @@ app.get("/donors", isAuthenticated, async (req, res) => {
   }
 });
 
-// ===============================
-// CREATE DONOR
-// ===============================
 app.post("/donors/new", isAuthenticated, async (req, res) => {
   const { first_name, last_name, email, mobile, city, state, remarks } = req.body;
   const donorId = "DN" + Date.now();
+
   try {
     await pool.query(
-      `INSERT INTO donors 
+      `INSERT INTO donors
       (donor_id, first_name, last_name, email, mobile, city, state, remarks)
       VALUES ($1,$2,$3,$4,$5,$6,$7,$8)`,
       [donorId, first_name, last_name, email, mobile, city, state, remarks]
     );
+
     res.redirect("/donors-page");
+
   } catch (err) {
     console.error(err);
     res.status(500).send("Error creating donor");
@@ -133,11 +181,223 @@ app.post("/donors/new", isAuthenticated, async (req, res) => {
 });
 
 // ===============================
-// (ALL OTHER ROUTES REMAIN EXACTLY SAME)
+// PROGRAMS
 // ===============================
+app.get("/programs", isAuthenticated, async (req, res) => {
+  try {
+    const result = await pool.query(
+      "SELECT id, program_name, description, program_date, created_at FROM programs ORDER BY id DESC"
+    );
+    res.json(result.rows);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: "Error fetching programs" });
+  }
+});
+
+app.post("/programs/new", isAuthenticated, async (req, res) => {
+  const { program_name, description, program_date } = req.body;
+
+  try {
+    await pool.query(
+      "INSERT INTO programs (program_name, description, program_date) VALUES ($1,$2,$3)",
+      [program_name, description, program_date]
+    );
+    res.redirect("/programs-page");
+  } catch (err) {
+    console.error(err);
+    res.status(500).send("Error creating program");
+  }
+});
 
 // ===============================
-// SERVER START
+// DONATIONS
+// ===============================
+app.post("/donations/new", isAuthenticated, async (req, res) => {
+  const { donor_id, program_id, donation_amount, donation_date, payment_mode, remarks } = req.body;
+
+  try {
+    await pool.query(
+      `INSERT INTO donations
+      (donor_id, program_id, donation_amount, donation_date, payment_mode, remarks)
+      VALUES ($1,$2,$3,$4,$5,$6)`,
+      [donor_id, program_id, donation_amount, donation_date, payment_mode, remarks]
+    );
+
+    res.redirect("/donations-page");
+
+  } catch (err) {
+    console.error(err);
+    res.status(500).send("Error creating donation");
+  }
+});
+
+// Fetch Donations
+app.get("/donations-list", isAuthenticated, async (req, res) => {
+  const { year } = req.query;
+
+  try {
+    let query = `
+      SELECT d.*, dn.first_name, dn.last_name, p.program_name
+      FROM donations d
+      JOIN donors dn ON d.donor_id = dn.id
+      LEFT JOIN programs p ON d.program_id = p.id
+    `;
+
+    const values = [];
+
+    if (year && year !== "All") {
+      query += ` WHERE EXTRACT(YEAR FROM d.donation_date) = $1`;
+      values.push(year);
+    }
+
+    query += " ORDER BY d.id DESC";
+
+    const result = await pool.query(query, values);
+    res.json(result.rows);
+
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: "Error fetching donations" });
+  }
+});
+
+// Export Donations CSV
+app.get("/donations-export", isAuthenticated, async (req, res) => {
+  const { year } = req.query;
+
+  try {
+    let query = `
+      SELECT d.*, dn.first_name, dn.last_name, p.program_name
+      FROM donations d
+      JOIN donors dn ON d.donor_id = dn.id
+      LEFT JOIN programs p ON d.program_id = p.id
+    `;
+
+    const values = [];
+
+    if (year && year !== "All") {
+      query += ` WHERE EXTRACT(YEAR FROM d.donation_date) = $1`;
+      values.push(year);
+    }
+
+    query += " ORDER BY d.id DESC";
+
+    const result = await pool.query(query, values);
+
+    if (result.rows.length === 0)
+      return res.send("No data available");
+
+    const headers = Object.keys(result.rows[0]).join(",");
+    const csvRows = result.rows.map(r =>
+      Object.values(r).map(v => `"${v ?? ""}"`).join(",")
+    );
+
+    const csv = [headers, ...csvRows].join("\n");
+
+    res.setHeader("Content-Type", "text/csv");
+    res.setHeader("Content-Disposition", "attachment; filename=donations.csv");
+    res.send(csv);
+
+  } catch (err) {
+    console.error(err);
+    res.status(500).send("Error exporting CSV");
+  }
+});
+
+// ===============================
+// EXPENSES
+// ===============================
+app.post("/expenses/new", isAuthenticated, async (req, res) => {
+  const { program_id, expense_amount, expense_date, expense_description, submitted_by, status, remarks } = req.body;
+
+  try {
+    await pool.query(
+      `INSERT INTO expenses
+      (program_id, expense_amount, expense_date, expense_description, submitted_by, status, remarks)
+      VALUES ($1,$2,$3,$4,$5,$6,$7)`,
+      [program_id, expense_amount, expense_date, expense_description, submitted_by, status, remarks]
+    );
+
+    res.redirect("/expenses-page");
+
+  } catch (err) {
+    console.error(err);
+    res.status(500).send("Error creating expense");
+  }
+});
+
+// Fetch Expenses
+app.get("/expenses-list", isAuthenticated, async (req, res) => {
+  const { year } = req.query;
+
+  try {
+    let query = `
+      SELECT e.*, p.program_name
+      FROM expenses e
+      LEFT JOIN programs p ON e.program_id = p.id
+    `;
+
+    const values = [];
+
+    if (year && year !== "All") {
+      query += ` WHERE EXTRACT(YEAR FROM e.expense_date) = $1`;
+      values.push(year);
+    }
+
+    query += " ORDER BY e.id DESC";
+
+    const result = await pool.query(query, values);
+    res.json(result.rows);
+
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: "Error fetching expenses" });
+  }
+});
+
+// Export Expenses CSV
+app.get("/expenses-export", isAuthenticated, async (req, res) => {
+  const { year } = req.query;
+
+  try {
+    let query = `
+      SELECT e.*, p.program_name
+      FROM expenses e
+      LEFT JOIN programs p ON e.program_id = p.id
+    `;
+
+    const values = [];
+
+    if (year && year !== "All") {
+      query += ` WHERE EXTRACT(YEAR FROM e.expense_date) = $1`;
+      values.push(year);
+    }
+
+    query += " ORDER BY e.id DESC";
+
+    const result = await pool.query(query, values);
+
+    if (result.rows.length === 0)
+      return res.send("No data available");
+
+    const headers = Object.keys(result.rows[0]).join(",");
+    const csvRows = result.rows.map(r =>
+      Object.values(r).map(v => `"${v ?? ""}"`).join(",")
+    );
+
+    const csv = [headers, ...csvRows].join("\n");
+
+    res.setHeader("Content-Type", "text/csv");
+    res.setHeader("Content-Disposition", "attachment; filename=expenses.csv");
+    res.send(csv);
+
+  } catch (err) {
+    console.error(err);
+    res.status(500).send("Error exporting CSV");
+  }
+});
+
 // ===============================
 const PORT = process.env.PORT || 3000;
-app.listen(PORT, () => console.log(`Donor App Running on Port ${PORT}`));
+app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
