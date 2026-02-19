@@ -10,8 +10,6 @@
 
 <style>
 .donor-card { margin-bottom: 1rem; }
-
-/* Default hidden */
 .table-view-only { display: none; }
 .card-view-only { display: none; }
 </style>
@@ -48,12 +46,22 @@
 <main class="flex-fill">
 <div class="container my-4">
 
-  <div class="row align-items-center mb-3">
-    <div class="col-12 col-md-6 mb-2 mb-md-0">
+  <!-- Top Controls -->
+  <div class="row g-2 align-items-center mb-3">
+    <div class="col-12 col-md-3">
       <a href="/new-donor-page" class="btn btn-success w-100">New Donor</a>
     </div>
 
-    <div class="col-12 col-md-6 text-md-end">
+    <div class="col-12 col-md-5">
+      <input type="text" id="searchInput" class="form-control"
+        placeholder="Search by Mobile or Name">
+    </div>
+
+    <div class="col-6 col-md-2">
+      <button class="btn btn-primary w-100" onclick="searchDonors()">Find</button>
+    </div>
+
+    <div class="col-6 col-md-2 text-md-end">
       <div class="form-check form-switch d-inline-block">
         <input class="form-check-input" type="checkbox" id="viewToggle">
         <label class="form-check-label" for="viewToggle">Table View</label>
@@ -98,23 +106,39 @@
 const donorTable = document.getElementById('donorTable');
 const donorCards = document.getElementById('donorCards');
 const viewToggle = document.getElementById('viewToggle');
+const searchInput = document.getElementById('searchInput');
 
 let donorsData = [];
+let currentSearch = "";
 
 /* =========================
    FETCH DONORS
 ========================= */
 async function fetchDonors(page=1) {
-  const res = await fetch(`/donors?page=${page}`);
+  const res = await fetch(`/donors?page=${page}&search=${currentSearch}`);
   donorsData = await res.json();
   renderDonors();
   renderPagination(page);
 }
 
 /* =========================
+   SEARCH FUNCTION
+========================= */
+function searchDonors(){
+  currentSearch = searchInput.value.trim();
+  fetchDonors(1);
+}
+
+/* =========================
    RENDER DATA
 ========================= */
 function renderDonors(){
+  if(donorsData.length === 0){
+    donorTable.innerHTML = `<tr><td colspan="6" class="text-center">No Records Found</td></tr>`;
+    donorCards.innerHTML = `<div class="col-12 text-center">No Records Found</div>`;
+    return;
+  }
+
   donorTable.innerHTML = donorsData.map(d => `
     <tr>
       <td>${d.donor_id}</td>
@@ -162,14 +186,12 @@ function renderPagination(current){
 }
 
 /* =========================
-   AUTO VIEW DETECTION
+   VIEW CONTROLS
 ========================= */
 function setInitialView() {
   if (window.innerWidth < 768) {
-    // Mobile → Card
     showCardView();
   } else {
-    // Desktop → Table
     showTableView();
   }
 }
@@ -186,9 +208,6 @@ function showCardView() {
   viewToggle.checked = false;
 }
 
-/* =========================
-   TOGGLE SWITCH
-========================= */
 viewToggle.addEventListener('change', () => {
   if(viewToggle.checked){
     showTableView();
@@ -197,19 +216,13 @@ viewToggle.addEventListener('change', () => {
   }
 });
 
-/* =========================
-   RESPONSIVE AUTO SWITCH
-========================= */
-window.addEventListener('resize', () => {
-  setInitialView();
-});
+window.addEventListener('resize', setInitialView);
 
 /* =========================
    INITIAL LOAD
 ========================= */
 fetchDonors();
 setInitialView();
-
 </script>
 
 </body>
