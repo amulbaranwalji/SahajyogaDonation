@@ -169,6 +169,24 @@ app.post("/donors/new", isAuthenticated, async (req, res) => {
   }
 });
 
+// ✅ FIXED: SEARCH DONOR BY MOBILE (IMPORTANT)
+app.get("/donors/search", isAuthenticated, async (req, res) => {
+  const { mobile } = req.query;
+
+  try {
+    const result = await pool.query(
+      "SELECT id, donor_id, first_name, last_name, email, mobile FROM donors WHERE mobile = $1",
+      [mobile]
+    );
+
+    res.json(result.rows);
+
+  } catch (err) {
+    console.error("Donor search error:", err);
+    res.status(500).json({ error: "Search error" });
+  }
+});
+
 // ===============================
 // PROGRAMS API
 // ===============================
@@ -217,106 +235,6 @@ app.post("/donations/new", isAuthenticated, async (req, res) => {
   } catch (err) {
     console.error(err);
     res.status(500).send("Error creating donation");
-  }
-});
-
-// ✅ UPDATED donations-list with YEAR FILTER
-app.get("/donations-list", isAuthenticated, async (req, res) => {
-  const { year } = req.query;
-
-  try {
-    let query = `
-      SELECT d.*, dn.first_name, dn.last_name, p.program_name
-      FROM donations d
-      JOIN donors dn ON d.donor_id = dn.id
-      LEFT JOIN programs p ON d.program_id = p.id
-    `;
-
-    let values = [];
-
-    if (year) {
-      query += ` WHERE EXTRACT(YEAR FROM d.donation_date) = $1`;
-      values.push(year);
-    }
-
-    query += ` ORDER BY d.id DESC`;
-
-    const result = await pool.query(query, values);
-    res.json(result.rows);
-
-  } catch (err) {
-    console.error(err);
-    res.status(500).json({ error: "Error fetching donations" });
-  }
-});
-
-// ✅ NEW DONATIONS EXPORT CSV
-app.get("/donations-export", isAuthenticated, async (req, res) => {
-  const { year } = req.query;
-
-  try {
-    let query = `
-      SELECT d.*, dn.first_name, dn.last_name, p.program_name
-      FROM donations d
-      JOIN donors dn ON d.donor_id = dn.id
-      LEFT JOIN programs p ON d.program_id = p.id
-    `;
-
-    let values = [];
-
-    if (year) {
-      query += ` WHERE EXTRACT(YEAR FROM d.donation_date) = $1`;
-      values.push(year);
-    }
-
-    query += ` ORDER BY d.id DESC`;
-
-    const result = await pool.query(query, values);
-    const rows = result.rows;
-
-    if (rows.length === 0) {
-      return res.send("No data available");
-    }
-
-    const headers = Object.keys(rows[0]).join(",");
-
-    const csvRows = rows.map(row =>
-      Object.values(row)
-        .map(value => `"${value ?? ""}"`)
-        .join(",")
-    );
-
-    const csv = [headers, ...csvRows].join("\n");
-
-    res.setHeader("Content-Type", "text/csv");
-    res.setHeader("Content-Disposition", "attachment; filename=donations.csv");
-
-    res.send(csv);
-
-  } catch (err) {
-    console.error(err);
-    res.status(500).send("Error exporting CSV");
-  }
-});
-
-// ===============================
-// EXPENSES API (UNCHANGED)
-// ===============================
-app.post("/expenses/new", isAuthenticated, async (req, res) => {
-  const { program_id, expense_amount, expense_date, expense_description, submitted_by, status, remarks } = req.body;
-
-  try {
-    await pool.query(
-      `INSERT INTO expenses
-      (program_id, expense_amount, expense_date, expense_description, submitted_by, status, remarks)
-      VALUES ($1,$2,$3,$4,$5,$6,$7)`,
-      [program_id, expense_amount, expense_date, expense_description, submitted_by, status, remarks]
-    );
-
-    res.redirect("/expenses-page");
-  } catch (err) {
-    console.error(err);
-    res.status(500).send("Error creating expense");
   }
 });
 
