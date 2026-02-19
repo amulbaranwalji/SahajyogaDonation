@@ -169,21 +169,6 @@ app.post("/donors/new", isAuthenticated, async (req, res) => {
   }
 });
 
-app.get("/donors/search", isAuthenticated, async (req, res) => {
-  const { mobile } = req.query;
-
-  try {
-    const result = await pool.query(
-      "SELECT * FROM donors WHERE mobile = $1",
-      [mobile]
-    );
-    res.json(result.rows);
-  } catch (err) {
-    console.error(err);
-    res.status(500).json({ error: "Search error" });
-  }
-});
-
 // ===============================
 // PROGRAMS API
 // ===============================
@@ -235,93 +220,56 @@ app.post("/donations/new", isAuthenticated, async (req, res) => {
   }
 });
 
+// ✅ UPDATED donations-list with YEAR FILTER
 app.get("/donations-list", isAuthenticated, async (req, res) => {
-  try {
-    const result = await pool.query(`
-      SELECT d.*, dn.first_name, dn.last_name, p.program_name
-      FROM donations d
-      JOIN donors dn ON d.donor_id = dn.id
-      LEFT JOIN programs p ON d.program_id = p.id
-      ORDER BY d.id DESC
-    `);
-
-    res.json(result.rows);
-  } catch (err) {
-    console.error(err);
-    res.status(500).json({ error: "Error fetching donations" });
-  }
-});
-
-// ===============================
-// EXPENSES API
-// ===============================
-app.post("/expenses/new", isAuthenticated, async (req, res) => {
-  const { program_id, expense_amount, expense_date, expense_description, submitted_by, status, remarks } = req.body;
-
-  try {
-    await pool.query(
-      `INSERT INTO expenses
-      (program_id, expense_amount, expense_date, expense_description, submitted_by, status, remarks)
-      VALUES ($1,$2,$3,$4,$5,$6,$7)`,
-      [program_id, expense_amount, expense_date, expense_description, submitted_by, status, remarks]
-    );
-
-    res.redirect("/expenses-page");
-  } catch (err) {
-    console.error(err);
-    res.status(500).send("Error creating expense");
-  }
-});
-
-app.get("/expenses-list", isAuthenticated, async (req, res) => {
   const { year } = req.query;
 
   try {
     let query = `
-      SELECT e.*, p.program_name
-      FROM expenses e
-      LEFT JOIN programs p ON e.program_id = p.id
+      SELECT d.*, dn.first_name, dn.last_name, p.program_name
+      FROM donations d
+      JOIN donors dn ON d.donor_id = dn.id
+      LEFT JOIN programs p ON d.program_id = p.id
     `;
 
     let values = [];
 
     if (year) {
-      query += ` WHERE EXTRACT(YEAR FROM e.expense_date) = $1`;
+      query += ` WHERE EXTRACT(YEAR FROM d.donation_date) = $1`;
       values.push(year);
     }
 
-    query += ` ORDER BY e.id DESC`;
+    query += ` ORDER BY d.id DESC`;
 
     const result = await pool.query(query, values);
     res.json(result.rows);
 
   } catch (err) {
     console.error(err);
-    res.status(500).json({ error: "Error fetching expenses" });
+    res.status(500).json({ error: "Error fetching donations" });
   }
 });
 
-// ===============================
-// EXPORT EXPENSES CSV
-// ===============================
-app.get("/expenses-export", isAuthenticated, async (req, res) => {
+// ✅ NEW DONATIONS EXPORT CSV
+app.get("/donations-export", isAuthenticated, async (req, res) => {
   const { year } = req.query;
 
   try {
     let query = `
-      SELECT e.*, p.program_name
-      FROM expenses e
-      LEFT JOIN programs p ON e.program_id = p.id
+      SELECT d.*, dn.first_name, dn.last_name, p.program_name
+      FROM donations d
+      JOIN donors dn ON d.donor_id = dn.id
+      LEFT JOIN programs p ON d.program_id = p.id
     `;
 
     let values = [];
 
     if (year) {
-      query += ` WHERE EXTRACT(YEAR FROM e.expense_date) = $1`;
+      query += ` WHERE EXTRACT(YEAR FROM d.donation_date) = $1`;
       values.push(year);
     }
 
-    query += ` ORDER BY e.id DESC`;
+    query += ` ORDER BY d.id DESC`;
 
     const result = await pool.query(query, values);
     const rows = result.rows;
@@ -341,13 +289,34 @@ app.get("/expenses-export", isAuthenticated, async (req, res) => {
     const csv = [headers, ...csvRows].join("\n");
 
     res.setHeader("Content-Type", "text/csv");
-    res.setHeader("Content-Disposition", "attachment; filename=expenses.csv");
+    res.setHeader("Content-Disposition", "attachment; filename=donations.csv");
 
     res.send(csv);
 
   } catch (err) {
     console.error(err);
     res.status(500).send("Error exporting CSV");
+  }
+});
+
+// ===============================
+// EXPENSES API (UNCHANGED)
+// ===============================
+app.post("/expenses/new", isAuthenticated, async (req, res) => {
+  const { program_id, expense_amount, expense_date, expense_description, submitted_by, status, remarks } = req.body;
+
+  try {
+    await pool.query(
+      `INSERT INTO expenses
+      (program_id, expense_amount, expense_date, expense_description, submitted_by, status, remarks)
+      VALUES ($1,$2,$3,$4,$5,$6,$7)`,
+      [program_id, expense_amount, expense_date, expense_description, submitted_by, status, remarks]
+    );
+
+    res.redirect("/expenses-page");
+  } catch (err) {
+    console.error(err);
+    res.status(500).send("Error creating expense");
   }
 });
 
