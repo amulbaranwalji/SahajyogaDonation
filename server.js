@@ -225,6 +225,78 @@ app.post("/donations/new", isAuthenticated, async (req, res) => {
   }
 });
 
+// ===============================
+// EXPORT DONATIONS CSV
+// ===============================
+app.get("/donations-export", isAuthenticated, async (req, res) => {
+  const { year } = req.query;
+
+  try {
+    let query = `
+      SELECT 
+        d.receipt_number,
+        dn.first_name,
+        dn.last_name,
+        p.program_name,
+        d.donation_amount,
+        d.donation_date,
+        d.payment_mode,
+        d.remarks
+      FROM donations d
+      JOIN donors dn ON d.donor_id = dn.id
+      LEFT JOIN programs p ON d.program_id = p.id
+    `;
+
+    const values = [];
+
+    if (year && year !== "All") {
+      query += ` WHERE EXTRACT(YEAR FROM d.donation_date) = $1`;
+      values.push(year);
+    }
+
+    query += " ORDER BY d.donation_date DESC";
+
+    const result = await pool.query(query, values);
+
+    if (result.rows.length === 0)
+      return res.send("No data available");
+
+    const headers = [
+      "Receipt Number",
+      "First Name",
+      "Last Name",
+      "Program",
+      "Amount",
+      "Donation Date",
+      "Payment Mode",
+      "Remarks"
+    ].join(",");
+
+    const csvRows = result.rows.map(r =>
+      [
+        r.receipt_number,
+        r.first_name,
+        r.last_name,
+        r.program_name,
+        r.donation_amount,
+        r.donation_date,
+        r.payment_mode,
+        r.remarks
+      ].map(v => `"${v ?? ""}"`).join(",")
+    );
+
+    const csv = [headers, ...csvRows].join("\n");
+
+    res.setHeader("Content-Type", "text/csv");
+    res.setHeader("Content-Disposition", "attachment; filename=donations.csv");
+    res.send(csv);
+
+  } catch (err) {
+    console.error(err);
+    res.status(500).send("Error exporting donations");
+  }
+});
+
 
 // ===============================
 // PROGRAMS
@@ -354,6 +426,73 @@ app.post("/expenses/new", isAuthenticated, async (req, res) => {
   }
 });
 
+// ===============================
+// EXPORT EXPENSES CSV
+// ===============================
+app.get("/expenses-export", isAuthenticated, async (req, res) => {
+  const { year } = req.query;
+
+  try {
+    let query = `
+      SELECT 
+        p.program_name,
+        e.expense_amount,
+        e.expense_date,
+        e.expense_description,
+        e.submitted_by,
+        e.status,
+        e.remarks
+      FROM expenses e
+      LEFT JOIN programs p ON e.program_id = p.id
+    `;
+
+    const values = [];
+
+    if (year && year !== "All") {
+      query += ` WHERE EXTRACT(YEAR FROM e.expense_date) = $1`;
+      values.push(year);
+    }
+
+    query += " ORDER BY e.expense_date DESC";
+
+    const result = await pool.query(query, values);
+
+    if (result.rows.length === 0)
+      return res.send("No data available");
+
+    const headers = [
+      "Program",
+      "Amount",
+      "Expense Date",
+      "Description",
+      "Submitted By",
+      "Status",
+      "Remarks"
+    ].join(",");
+
+    const csvRows = result.rows.map(r =>
+      [
+        r.program_name,
+        r.expense_amount,
+        r.expense_date,
+        r.expense_description,
+        r.submitted_by,
+        r.status,
+        r.remarks
+      ].map(v => `"${v ?? ""}"`).join(",")
+    );
+
+    const csv = [headers, ...csvRows].join("\n");
+
+    res.setHeader("Content-Type", "text/csv");
+    res.setHeader("Content-Disposition", "attachment; filename=expenses.csv");
+    res.send(csv);
+
+  } catch (err) {
+    console.error(err);
+    res.status(500).send("Error exporting expenses");
+  }
+});
 
 
 const PORT = process.env.PORT || 3000;
