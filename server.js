@@ -251,7 +251,7 @@ app.post("/expenses/new", isAuthenticated, async (req, res) => {
   }
 });
 
-// ✅ FETCH EXPENSES LIST (with optional year filter)
+// ✅ FETCH EXPENSES LIST (optional year filter)
 app.get("/expenses-list", isAuthenticated, async (req, res) => {
   const { year } = req.query;
   try {
@@ -271,6 +271,40 @@ app.get("/expenses-list", isAuthenticated, async (req, res) => {
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: "Error fetching expenses" });
+  }
+});
+
+// ✅ EXPORT EXPENSES CSV (supports year filter)
+app.get("/expenses-export", isAuthenticated, async (req, res) => {
+  const { year } = req.query;
+  try {
+    let query = `
+      SELECT e.*, p.program_name
+      FROM expenses e
+      LEFT JOIN programs p ON e.program_id = p.id
+    `;
+    const values = [];
+    if (year && year !== "All") {
+      query += ` WHERE EXTRACT(YEAR FROM e.expense_date) = $1`;
+      values.push(year);
+    }
+    query += " ORDER BY e.id DESC";
+    const result = await pool.query(query, values);
+    if (result.rows.length === 0) return res.send("No data available");
+
+    const headers = Object.keys(result.rows[0]).join(",");
+    const csvRows = result.rows.map(r =>
+      Object.values(r).map(v => `"${v ?? ""}"`).join(",")
+    );
+    const csv = [headers, ...csvRows].join("\n");
+
+    res.setHeader("Content-Type", "text/csv");
+    res.setHeader("Content-Disposition", "attachment; filename=expenses.csv");
+    res.send(csv);
+
+  } catch (err) {
+    console.error(err);
+    res.status(500).send("Error exporting CSV");
   }
 });
 
