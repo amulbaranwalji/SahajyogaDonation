@@ -50,7 +50,6 @@ function isAuthenticated(req, res, next) {
 // ===============================
 // PAGE ROUTES
 // ===============================
-
 app.get("/", (req, res) => {
   res.sendFile(path.join(__dirname, "views", "donorlogin.html"));
 });
@@ -92,7 +91,7 @@ app.get("/new-expense-page", isAuthenticated, (req, res) => {
 });
 
 // ===============================
-// LOGIN (PLAIN TEXT)
+// LOGIN
 // ===============================
 app.post("/login", async (req, res) => {
   const { username, password } = req.body;
@@ -134,7 +133,6 @@ app.get("/logout", (req, res) => {
 // ===============================
 // DONORS API
 // ===============================
-
 app.get("/donors", isAuthenticated, async (req, res) => {
   const page = parseInt(req.query.page) || 1;
   const limit = 5;
@@ -189,7 +187,6 @@ app.get("/donors/search", isAuthenticated, async (req, res) => {
 // ===============================
 // PROGRAMS API
 // ===============================
-
 app.get("/programs", isAuthenticated, async (req, res) => {
   try {
     const result = await pool.query(
@@ -220,7 +217,6 @@ app.post("/programs/new", isAuthenticated, async (req, res) => {
 // ===============================
 // DONATIONS API
 // ===============================
-
 app.post("/donations/new", isAuthenticated, async (req, res) => {
   const { donor_id, program_id, donation_amount, donation_date, payment_mode, remarks } = req.body;
 
@@ -257,9 +253,8 @@ app.get("/donations-list", isAuthenticated, async (req, res) => {
 });
 
 // ===============================
-// EXPENSES API (UPDATED WITH YEAR FILTER)
+// EXPENSES API
 // ===============================
-
 app.post("/expenses/new", isAuthenticated, async (req, res) => {
   const { program_id, expense_amount, expense_date, expense_description, submitted_by, status, remarks } = req.body;
 
@@ -298,11 +293,61 @@ app.get("/expenses-list", isAuthenticated, async (req, res) => {
     query += ` ORDER BY e.id DESC`;
 
     const result = await pool.query(query, values);
-
     res.json(result.rows);
+
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: "Error fetching expenses" });
+  }
+});
+
+// ===============================
+// EXPORT EXPENSES CSV
+// ===============================
+app.get("/expenses-export", isAuthenticated, async (req, res) => {
+  const { year } = req.query;
+
+  try {
+    let query = `
+      SELECT e.*, p.program_name
+      FROM expenses e
+      LEFT JOIN programs p ON e.program_id = p.id
+    `;
+
+    let values = [];
+
+    if (year) {
+      query += ` WHERE EXTRACT(YEAR FROM e.expense_date) = $1`;
+      values.push(year);
+    }
+
+    query += ` ORDER BY e.id DESC`;
+
+    const result = await pool.query(query, values);
+    const rows = result.rows;
+
+    if (rows.length === 0) {
+      return res.send("No data available");
+    }
+
+    const headers = Object.keys(rows[0]).join(",");
+
+    const csvRows = rows.map(row =>
+      Object.values(row)
+        .map(value => `"${value ?? ""}"`)
+        .join(",")
+    );
+
+    const csv = [headers, ...csvRows].join("\n");
+
+    res.setHeader("Content-Type", "text/csv");
+    res.setHeader("Content-Disposition", "attachment; filename=expenses.csv");
+
+    res.send(csv);
+
+  } catch (err) {
+    console.error(err);
+    res.status(500).send("Error exporting CSV");
   }
 });
 
