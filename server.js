@@ -8,7 +8,6 @@ import pkg from "pg";
 dotenv.config();
 
 const { Pool } = pkg;
-
 const app = express();
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -18,9 +17,7 @@ const __dirname = path.dirname(__filename);
 // ===============================
 const pool = new Pool({
   connectionString: process.env.DATABASE_URL,
-  ssl: {
-    rejectUnauthorized: false
-  }
+  ssl: { rejectUnauthorized: false }
 });
 
 // ===============================
@@ -28,121 +25,66 @@ const pool = new Pool({
 // ===============================
 app.use(express.urlencoded({ extended: true }));
 app.use(express.json());
-
 app.use(session({
   secret: process.env.SESSION_SECRET || "mysecret",
   resave: false,
   saveUninitialized: false
 }));
-
 app.use(express.static(path.join(__dirname, "public")));
 
 // ===============================
 // AUTH MIDDLEWARE
 // ===============================
 function isAuthenticated(req, res, next) {
-  if (req.session.user) {
-    return next();
-  }
+  if (req.session.user) return next();
   res.redirect("/");
 }
 
 // ===============================
 // PAGE ROUTES
 // ===============================
-app.get("/", (req, res) => {
-  res.sendFile(path.join(__dirname, "views", "donorlogin.html"));
-});
-
-app.get("/dashboard", isAuthenticated, (req, res) => {
-  res.sendFile(path.join(__dirname, "views", "dashboard.html"));
-});
-
-app.get("/donors-page", isAuthenticated, (req, res) => {
-  res.sendFile(path.join(__dirname, "views", "donors.html"));
-});
-
-app.get("/new-donor-page", isAuthenticated, (req, res) => {
-  res.sendFile(path.join(__dirname, "views", "new-donor.html"));
-});
-
-app.get("/programs-page", isAuthenticated, (req, res) => {
-  res.sendFile(path.join(__dirname, "views", "programs.html"));
-});
-
-app.get("/new-program-page", isAuthenticated, (req, res) => {
-  res.sendFile(path.join(__dirname, "views", "new-program.html"));
-});
-
-app.get("/donations-page", isAuthenticated, (req, res) => {
-  res.sendFile(path.join(__dirname, "views", "donations.html"));
-});
-
-app.get("/new-donation-page", isAuthenticated, (req, res) => {
-  res.sendFile(path.join(__dirname, "views", "new-donation.html"));
-});
-
-app.get("/expenses-page", isAuthenticated, (req, res) => {
-  res.sendFile(path.join(__dirname, "views", "expenses.html"));
-});
-
-app.get("/new-expense-page", isAuthenticated, (req, res) => {
-  res.sendFile(path.join(__dirname, "views", "new-expense.html"));
-});
+app.get("/", (req, res) => res.sendFile(path.join(__dirname, "views", "donorlogin.html")));
+app.get("/dashboard", isAuthenticated, (req, res) => res.sendFile(path.join(__dirname, "views", "dashboard.html")));
+app.get("/donors-page", isAuthenticated, (req, res) => res.sendFile(path.join(__dirname, "views", "donors.html")));
+app.get("/new-donor-page", isAuthenticated, (req, res) => res.sendFile(path.join(__dirname, "views", "new-donor.html")));
+app.get("/programs-page", isAuthenticated, (req, res) => res.sendFile(path.join(__dirname, "views", "programs.html")));
+app.get("/new-program-page", isAuthenticated, (req, res) => res.sendFile(path.join(__dirname, "views", "new-program.html")));
+app.get("/donations-page", isAuthenticated, (req, res) => res.sendFile(path.join(__dirname, "views", "donations.html")));
+app.get("/new-donation-page", isAuthenticated, (req, res) => res.sendFile(path.join(__dirname, "views", "new-donation.html")));
+app.get("/expenses-page", isAuthenticated, (req, res) => res.sendFile(path.join(__dirname, "views", "expenses.html")));
+app.get("/new-expense-page", isAuthenticated, (req, res) => res.sendFile(path.join(__dirname, "views", "new-expense.html")));
 
 // ===============================
-// LOGIN
+// LOGIN / LOGOUT
 // ===============================
 app.post("/login", async (req, res) => {
   const { username, password } = req.body;
-
   try {
-    const result = await pool.query(
-      "SELECT * FROM admins WHERE username = $1",
-      [username]
-    );
-
-    if (result.rows.length === 0) {
-      return res.send("Invalid username");
-    }
-
+    const result = await pool.query("SELECT * FROM admins WHERE username=$1", [username]);
+    if (result.rows.length === 0) return res.send("Invalid username");
     const user = result.rows[0];
-
-    if (password !== user.password) {
-      return res.send("Invalid password");
-    }
-
+    if (password !== user.password) return res.send("Invalid password");
     req.session.user = user;
     res.redirect("/dashboard");
-
   } catch (err) {
-    console.error("Login Error:", err);
+    console.error(err);
     res.send("Login error");
   }
 });
 
-// ===============================
-// LOGOUT
-// ===============================
 app.get("/logout", (req, res) => {
-  req.session.destroy(() => {
-    res.redirect("/");
-  });
+  req.session.destroy(() => res.redirect("/"));
 });
 
 // ===============================
-// DONORS API
+// DONORS
 // ===============================
 app.get("/donors", isAuthenticated, async (req, res) => {
   const page = parseInt(req.query.page) || 1;
   const limit = 5;
   const offset = (page - 1) * limit;
-
   try {
-    const result = await pool.query(
-      "SELECT * FROM donors ORDER BY id DESC LIMIT $1 OFFSET $2",
-      [limit, offset]
-    );
+    const result = await pool.query("SELECT * FROM donors ORDER BY id DESC LIMIT $1 OFFSET $2", [limit, offset]);
     res.json(result.rows);
   } catch (err) {
     console.error(err);
@@ -153,7 +95,6 @@ app.get("/donors", isAuthenticated, async (req, res) => {
 app.post("/donors/new", isAuthenticated, async (req, res) => {
   const { first_name, last_name, email, mobile, city, state, remarks } = req.body;
   const donorId = "DN" + Date.now();
-
   try {
     await pool.query(
       `INSERT INTO donors 
@@ -161,7 +102,6 @@ app.post("/donors/new", isAuthenticated, async (req, res) => {
       VALUES ($1,$2,$3,$4,$5,$6,$7,$8)`,
       [donorId, first_name, last_name, email, mobile, city, state, remarks]
     );
-
     res.redirect("/donors-page");
   } catch (err) {
     console.error(err);
@@ -169,26 +109,24 @@ app.post("/donors/new", isAuthenticated, async (req, res) => {
   }
 });
 
-// ✅ FIXED: SEARCH DONOR BY MOBILE (IMPORTANT)
+// ✅ SEARCH DONOR BY MOBILE
 app.get("/donors/search", isAuthenticated, async (req, res) => {
   const { mobile } = req.query;
-
+  if (!mobile) return res.json([]);
   try {
     const result = await pool.query(
-      "SELECT id, donor_id, first_name, last_name, email, mobile FROM donors WHERE mobile = $1",
+      "SELECT id, donor_id, first_name, last_name, email, mobile FROM donors WHERE mobile=$1",
       [mobile]
     );
-
     res.json(result.rows);
-
   } catch (err) {
-    console.error("Donor search error:", err);
+    console.error(err);
     res.status(500).json({ error: "Search error" });
   }
 });
 
 // ===============================
-// PROGRAMS API
+// PROGRAMS
 // ===============================
 app.get("/programs", isAuthenticated, async (req, res) => {
   try {
@@ -204,7 +142,6 @@ app.get("/programs", isAuthenticated, async (req, res) => {
 
 app.post("/programs/new", isAuthenticated, async (req, res) => {
   const { program_name, description, program_date } = req.body;
-
   try {
     await pool.query(
       "INSERT INTO programs (program_name, description, program_date) VALUES ($1,$2,$3)",
@@ -218,11 +155,10 @@ app.post("/programs/new", isAuthenticated, async (req, res) => {
 });
 
 // ===============================
-// DONATIONS API
+// DONATIONS
 // ===============================
 app.post("/donations/new", isAuthenticated, async (req, res) => {
   const { donor_id, program_id, donation_amount, donation_date, payment_mode, remarks } = req.body;
-
   try {
     await pool.query(
       `INSERT INTO donations
@@ -230,7 +166,6 @@ app.post("/donations/new", isAuthenticated, async (req, res) => {
       VALUES ($1,$2,$3,$4,$5,$6)`,
       [donor_id, program_id, donation_amount, donation_date, payment_mode, remarks]
     );
-
     res.redirect("/donations-page");
   } catch (err) {
     console.error(err);
@@ -238,11 +173,85 @@ app.post("/donations/new", isAuthenticated, async (req, res) => {
   }
 });
 
+// ✅ FETCH DONATIONS LIST (optional year filter)
+app.get("/donations-list", isAuthenticated, async (req, res) => {
+  const { year } = req.query;
+  try {
+    let query = `
+      SELECT d.*, dn.first_name, dn.last_name, p.program_name
+      FROM donations d
+      JOIN donors dn ON d.donor_id = dn.id
+      LEFT JOIN programs p ON d.program_id = p.id
+    `;
+    const values = [];
+    if (year && year !== "All") {
+      query += ` WHERE EXTRACT(YEAR FROM d.donation_date) = $1`;
+      values.push(year);
+    }
+    query += " ORDER BY d.id DESC";
+    const result = await pool.query(query, values);
+    res.json(result.rows);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: "Error fetching donations" });
+  }
+});
+
+// ✅ EXPORT DONATIONS CSV
+app.get("/donations-export", isAuthenticated, async (req, res) => {
+  const { year } = req.query;
+  try {
+    let query = `
+      SELECT d.*, dn.first_name, dn.last_name, p.program_name
+      FROM donations d
+      JOIN donors dn ON d.donor_id = dn.id
+      LEFT JOIN programs p ON d.program_id = p.id
+    `;
+    const values = [];
+    if (year && year !== "All") {
+      query += ` WHERE EXTRACT(YEAR FROM d.donation_date) = $1`;
+      values.push(year);
+    }
+    query += " ORDER BY d.id DESC";
+
+    const result = await pool.query(query, values);
+    if (result.rows.length === 0) return res.send("No data available");
+
+    const headers = Object.keys(result.rows[0]).join(",");
+    const csvRows = result.rows.map(r =>
+      Object.values(r).map(v => `"${v ?? ""}"`).join(",")
+    );
+    const csv = [headers, ...csvRows].join("\n");
+
+    res.setHeader("Content-Type", "text/csv");
+    res.setHeader("Content-Disposition", "attachment; filename=donations.csv");
+    res.send(csv);
+
+  } catch (err) {
+    console.error(err);
+    res.status(500).send("Error exporting CSV");
+  }
+});
+
+// ===============================
+// EXPENSES (UNCHANGED)
+app.post("/expenses/new", isAuthenticated, async (req, res) => {
+  const { program_id, expense_amount, expense_date, expense_description, submitted_by, status, remarks } = req.body;
+  try {
+    await pool.query(
+      `INSERT INTO expenses
+      (program_id, expense_amount, expense_date, expense_description, submitted_by, status, remarks)
+      VALUES ($1,$2,$3,$4,$5,$6,$7)`,
+      [program_id, expense_amount, expense_date, expense_description, submitted_by, status, remarks]
+    );
+    res.redirect("/expenses-page");
+  } catch (err) {
+    console.error(err);
+    res.status(500).send("Error creating expense");
+  }
+});
+
 // ===============================
 // SERVER START
-// ===============================
 const PORT = process.env.PORT || 3000;
-
-app.listen(PORT, () => {
-  console.log(`Donor App Running on Port ${PORT}`);
-});
+app.listen(PORT, () => console.log(`Donor App Running on Port ${PORT}`));
