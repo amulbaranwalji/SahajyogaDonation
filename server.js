@@ -213,7 +213,6 @@ app.get("/donations-export", isAuthenticated, async (req, res) => {
       values.push(year);
     }
     query += " ORDER BY d.id DESC";
-
     const result = await pool.query(query, values);
     if (result.rows.length === 0) return res.send("No data available");
 
@@ -252,15 +251,22 @@ app.post("/expenses/new", isAuthenticated, async (req, res) => {
   }
 });
 
-// ✅ FETCH EXPENSES LIST (needed for expenses tab)
+// ✅ FETCH EXPENSES LIST (with optional year filter)
 app.get("/expenses-list", isAuthenticated, async (req, res) => {
+  const { year } = req.query;
   try {
-    const result = await pool.query(`
+    let query = `
       SELECT e.*, p.program_name
       FROM expenses e
       LEFT JOIN programs p ON e.program_id = p.id
-      ORDER BY e.id DESC
-    `);
+    `;
+    const values = [];
+    if (year && year !== "All") {
+      query += ` WHERE EXTRACT(YEAR FROM e.expense_date) = $1`;
+      values.push(year);
+    }
+    query += " ORDER BY e.id DESC";
+    const result = await pool.query(query, values);
     res.json(result.rows);
   } catch (err) {
     console.error(err);
