@@ -135,7 +135,6 @@ app.get("/logout", (req, res) => {
 // DONORS API
 // ===============================
 
-// Pagination (5 per page)
 app.get("/donors", isAuthenticated, async (req, res) => {
   const page = parseInt(req.query.page) || 1;
   const limit = 5;
@@ -153,7 +152,6 @@ app.get("/donors", isAuthenticated, async (req, res) => {
   }
 });
 
-// Create donor
 app.post("/donors/new", isAuthenticated, async (req, res) => {
   const { first_name, last_name, email, mobile, city, state, remarks } = req.body;
   const donorId = "DN" + Date.now();
@@ -173,7 +171,6 @@ app.post("/donors/new", isAuthenticated, async (req, res) => {
   }
 });
 
-// Search donor
 app.get("/donors/search", isAuthenticated, async (req, res) => {
   const { mobile } = req.query;
 
@@ -190,10 +187,9 @@ app.get("/donors/search", isAuthenticated, async (req, res) => {
 });
 
 // ===============================
-// PROGRAMS API (UPDATED)
+// PROGRAMS API
 // ===============================
 
-// Fetch all programs
 app.get("/programs", isAuthenticated, async (req, res) => {
   try {
     const result = await pool.query(
@@ -206,7 +202,6 @@ app.get("/programs", isAuthenticated, async (req, res) => {
   }
 });
 
-// Create new program (save program_date too)
 app.post("/programs/new", isAuthenticated, async (req, res) => {
   const { program_name, description, program_date } = req.body;
 
@@ -226,7 +221,6 @@ app.post("/programs/new", isAuthenticated, async (req, res) => {
 // DONATIONS API
 // ===============================
 
-// Create donation
 app.post("/donations/new", isAuthenticated, async (req, res) => {
   const { donor_id, program_id, donation_amount, donation_date, payment_mode, remarks } = req.body;
 
@@ -245,7 +239,6 @@ app.post("/donations/new", isAuthenticated, async (req, res) => {
   }
 });
 
-// List donations
 app.get("/donations-list", isAuthenticated, async (req, res) => {
   try {
     const result = await pool.query(`
@@ -264,10 +257,9 @@ app.get("/donations-list", isAuthenticated, async (req, res) => {
 });
 
 // ===============================
-// EXPENSES API
+// EXPENSES API (UPDATED WITH YEAR FILTER)
 // ===============================
 
-// Create expense
 app.post("/expenses/new", isAuthenticated, async (req, res) => {
   const { program_id, expense_amount, expense_date, expense_description, submitted_by, status, remarks } = req.body;
 
@@ -286,15 +278,26 @@ app.post("/expenses/new", isAuthenticated, async (req, res) => {
   }
 });
 
-// List expenses
 app.get("/expenses-list", isAuthenticated, async (req, res) => {
+  const { year } = req.query;
+
   try {
-    const result = await pool.query(`
+    let query = `
       SELECT e.*, p.program_name
       FROM expenses e
       LEFT JOIN programs p ON e.program_id = p.id
-      ORDER BY e.id DESC
-    `);
+    `;
+
+    let values = [];
+
+    if (year) {
+      query += ` WHERE EXTRACT(YEAR FROM e.expense_date) = $1`;
+      values.push(year);
+    }
+
+    query += ` ORDER BY e.id DESC`;
+
+    const result = await pool.query(query, values);
 
     res.json(result.rows);
   } catch (err) {
