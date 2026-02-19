@@ -280,5 +280,35 @@ app.get("/expenses-list", isAuthenticated, async (req, res) => {
   }
 });
 
+// Create Expense
+app.post("/expenses/new", isAuthenticated, async (req, res) => {
+  const { program_id, expense_amount, expense_date, expense_description, submitted_by, status, remarks } = req.body;
+
+  try {
+    await pool.query(
+      `INSERT INTO expenses
+      (program_id, expense_amount, expense_date, expense_description, submitted_by, status, remarks)
+      VALUES ($1,$2,$3,$4,$5,$6,$7)`,
+      [
+        program_id,
+        expense_amount,
+        expense_date,
+        expense_description,
+        submitted_by,
+        status,
+        remarks
+      ]
+    );
+
+    res.redirect("/expenses-page");
+
+  } catch (err) {
+    console.error(err);
+    res.status(500).send("Error creating expense");
+  }
+});
+
+
+
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
