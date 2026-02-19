@@ -4,17 +4,22 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Donors</title>
+
 <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
 <link rel="stylesheet" href="/css/style.css">
+
 <style>
 .donor-card { margin-bottom: 1rem; }
-@media(min-width:768px){ .card-view-only { display:none; } }
-@media(max-width:767px){ .table-view-only { display:none; } }
+
+/* Default hidden */
+.table-view-only { display: none; }
+.card-view-only { display: none; }
 </style>
 </head>
+
 <body class="d-flex flex-column min-vh-100 bg-light">
 
-<!-- Header & Tabs -->
+<!-- Header -->
 <nav class="navbar navbar-expand-lg navbar-dark bg-dark px-4">
   <a class="navbar-brand" href="/dashboard">Donor App</a>
   <div class="ms-auto dropdown">
@@ -27,6 +32,7 @@
   </div>
 </nav>
 
+<!-- Tabs -->
 <div class="bg-white shadow-sm">
   <div class="container">
     <ul class="nav nav-tabs py-2 flex-nowrap overflow-auto">
@@ -46,6 +52,7 @@
     <div class="col-12 col-md-6 mb-2 mb-md-0">
       <a href="/new-donor-page" class="btn btn-success w-100">New Donor</a>
     </div>
+
     <div class="col-12 col-md-6 text-md-end">
       <div class="form-check form-switch d-inline-block">
         <input class="form-check-input" type="checkbox" id="viewToggle">
@@ -54,7 +61,7 @@
     </div>
   </div>
 
-  <!-- Table View -->
+  <!-- TABLE VIEW -->
   <div class="table-view-only">
     <table class="table table-striped table-bordered">
       <thead class="table-dark">
@@ -75,7 +82,7 @@
     </nav>
   </div>
 
-  <!-- Card View -->
+  <!-- CARD VIEW -->
   <div id="donorCards" class="card-view-only row"></div>
 
 </div>
@@ -85,13 +92,18 @@
   © 2026 Donor App
 </footer>
 
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+
 <script>
 const donorTable = document.getElementById('donorTable');
 const donorCards = document.getElementById('donorCards');
 const viewToggle = document.getElementById('viewToggle');
+
 let donorsData = [];
 
-// Fetch Donors
+/* =========================
+   FETCH DONORS
+========================= */
 async function fetchDonors(page=1) {
   const res = await fetch(`/donors?page=${page}`);
   donorsData = await res.json();
@@ -99,7 +111,9 @@ async function fetchDonors(page=1) {
   renderPagination(page);
 }
 
-// Render Donors
+/* =========================
+   RENDER DATA
+========================= */
 function renderDonors(){
   donorTable.innerHTML = donorsData.map(d => `
     <tr>
@@ -117,45 +131,85 @@ function renderDonors(){
       <div class="card donor-card shadow-sm">
         <div class="card-body">
           <h5 class="card-title">${d.first_name} ${d.last_name}</h5>
-          <p>Donor ID: ${d.donor_id}</p>
-          <p>Email: ${d.email || '-'}</p>
-          <p>Mobile: ${d.mobile || '-'}</p>
-          <p>City: ${d.city || '-'}</p>
-          <p>State: ${d.state || '-'}</p>
+          <p><strong>Donor ID:</strong> ${d.donor_id}</p>
+          <p><strong>Email:</strong> ${d.email || '-'}</p>
+          <p><strong>Mobile:</strong> ${d.mobile || '-'}</p>
+          <p><strong>City:</strong> ${d.city || '-'}</p>
+          <p><strong>State:</strong> ${d.state || '-'}</p>
         </div>
       </div>
     </div>
   `).join('');
 }
 
-// Pagination (simple)
+/* =========================
+   PAGINATION
+========================= */
 function renderPagination(current){
   const pagination = document.getElementById('pagination');
   pagination.innerHTML = '';
+
   for(let i=1;i<=5;i++){
     const li = document.createElement('li');
     li.className = `page-item ${i===current?'active':''}`;
     li.innerHTML = `<a class="page-link" href="#">${i}</a>`;
-    li.addEventListener('click', e=>{ e.preventDefault(); fetchDonors(i); });
+    li.addEventListener('click', e=>{
+      e.preventDefault();
+      fetchDonors(i);
+    });
     pagination.appendChild(li);
   }
 }
 
-// Toggle Views
-viewToggle.addEventListener('change', ()=>{
-  if(viewToggle.checked){
-    document.querySelector('.table-view-only').style.display='block';
-    document.querySelector('.card-view-only').style.display='none';
+/* =========================
+   AUTO VIEW DETECTION
+========================= */
+function setInitialView() {
+  if (window.innerWidth < 768) {
+    // Mobile → Card
+    showCardView();
   } else {
-    document.querySelector('.table-view-only').style.display='none';
-    document.querySelector('.card-view-only').style.display='flex';
+    // Desktop → Table
+    showTableView();
+  }
+}
+
+function showTableView() {
+  document.querySelector('.table-view-only').style.display = 'block';
+  document.querySelector('.card-view-only').style.display = 'none';
+  viewToggle.checked = true;
+}
+
+function showCardView() {
+  document.querySelector('.table-view-only').style.display = 'none';
+  document.querySelector('.card-view-only').style.display = 'flex';
+  viewToggle.checked = false;
+}
+
+/* =========================
+   TOGGLE SWITCH
+========================= */
+viewToggle.addEventListener('change', () => {
+  if(viewToggle.checked){
+    showTableView();
+  } else {
+    showCardView();
   }
 });
 
-// Initial Load
+/* =========================
+   RESPONSIVE AUTO SWITCH
+========================= */
+window.addEventListener('resize', () => {
+  setInitialView();
+});
+
+/* =========================
+   INITIAL LOAD
+========================= */
 fetchDonors();
-document.querySelector('.table-view-only').style.display='none';
-document.querySelector('.card-view-only').style.display='flex';
+setInitialView();
+
 </script>
 
 </body>
