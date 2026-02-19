@@ -4,24 +4,54 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Expenses</title>
+
 <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
 <link rel="stylesheet" href="/css/style.css">
+
 <style>
 .expense-card { margin-bottom: 1rem; }
-@media(min-width:768px){ .card-view-only { display:none; } }
-@media(max-width:767px){ .table-view-only { display:none; } }
+
+/* Desktop */
+@media(min-width:768px){
+  .card-view-only { display:none; }
+}
+
+/* Mobile */
+@media(max-width:767px){
+  .table-view-only { display:none; }
+}
 </style>
+
 </head>
 <body class="d-flex flex-column min-vh-100 bg-light">
 
+<!-- NAVBAR -->
 <nav class="navbar navbar-expand-lg navbar-dark bg-dark px-4">
   <a class="navbar-brand" href="/dashboard">Donor App</a>
+  <div class="ms-auto">
+    <a href="/logout" class="btn btn-sm btn-danger">Logout</a>
+  </div>
 </nav>
 
+<!-- TOP TABS -->
 <div class="bg-white shadow-sm">
   <div class="container">
     <ul class="nav nav-tabs py-2 flex-nowrap overflow-auto">
-      <li class="nav-item"><a class="nav-link active" href="/expenses-page">Expenses</a></li>
+      <li class="nav-item">
+        <a class="nav-link" href="/dashboard">Dashboard</a>
+      </li>
+      <li class="nav-item">
+        <a class="nav-link" href="/donors-page">Donors</a>
+      </li>
+      <li class="nav-item">
+        <a class="nav-link" href="/programs-page">Programs</a>
+      </li>
+      <li class="nav-item">
+        <a class="nav-link" href="/donations-page">Donations</a>
+      </li>
+      <li class="nav-item">
+        <a class="nav-link active" href="/expenses-page">Expenses</a>
+      </li>
     </ul>
   </div>
 </div>
@@ -29,10 +59,13 @@
 <main class="flex-fill">
 <div class="container my-4">
 
+  <!-- ACTION ROW -->
   <div class="row align-items-center mb-3">
-    
+
     <div class="col-12 col-md-3 mb-2">
-      <a href="/new-expense-page" class="btn btn-success w-100">New Expense</a>
+      <a href="/new-expense-page" class="btn btn-success w-100">
+        + New Expense
+      </a>
     </div>
 
     <div class="col-12 col-md-3 mb-2">
@@ -63,8 +96,9 @@
 
   </div>
 
+  <!-- TABLE VIEW -->
   <div class="table-view-only">
-    <table class="table table-striped table-bordered">
+    <table class="table table-bordered table-striped">
       <thead class="table-dark">
         <tr>
           <th>Program</th>
@@ -78,11 +112,13 @@
     </table>
   </div>
 
+  <!-- CARD VIEW -->
   <div id="expenseCards" class="card-view-only row"></div>
 
 </div>
 </main>
 
+<!-- FOOTER -->
 <footer class="bg-dark text-white text-center py-3 mt-auto">
   © 2026 Donor App
 </footer>
@@ -95,6 +131,7 @@ const yearFilter = document.getElementById('yearFilter');
 const exportBtn = document.getElementById('exportCSV');
 let expensesData = [];
 
+// Format Date DD-MM-YYYY
 function formatDate(dateStr) {
   const date = new Date(dateStr);
   const dd = String(date.getDate()).padStart(2, '0');
@@ -103,14 +140,15 @@ function formatDate(dateStr) {
   return `${dd}-${mm}-${yyyy}`;
 }
 
+// Render Table + Cards
 function renderExpenses(){
   expenseTable.innerHTML = expensesData.map(e => `
     <tr>
-      <td>${e.program_name}</td>
+      <td>${e.program_name || ''}</td>
       <td>₹ ${e.expense_amount}</td>
       <td>${formatDate(e.expense_date)}</td>
-      <td>${e.status}</td>
-      <td>${e.submitted_by}</td>
+      <td>${e.status || ''}</td>
+      <td>${e.submitted_by || ''}</td>
     </tr>
   `).join('');
 
@@ -118,17 +156,18 @@ function renderExpenses(){
     <div class="col-12 col-md-6 col-lg-4">
       <div class="card expense-card shadow-sm">
         <div class="card-body">
-          <h5 class="card-title">${e.program_name}</h5>
-          <p>Amount: ₹ ${e.expense_amount}</p>
-          <p>Date: ${formatDate(e.expense_date)}</p>
-          <p>Status: ${e.status}</p>
-          <p>Submitted By: ${e.submitted_by}</p>
+          <h5 class="card-title">${e.program_name || ''}</h5>
+          <p><strong>Amount:</strong> ₹ ${e.expense_amount}</p>
+          <p><strong>Date:</strong> ${formatDate(e.expense_date)}</p>
+          <p><strong>Status:</strong> ${e.status || ''}</p>
+          <p><strong>Submitted By:</strong> ${e.submitted_by || ''}</p>
         </div>
       </div>
     </div>
   `).join('');
 }
 
+// Fetch Expenses
 function fetchExpenses(year=''){
   let url = '/expenses-list';
   if(year){
@@ -143,10 +182,12 @@ function fetchExpenses(year=''){
     });
 }
 
+// Year Change
 yearFilter.addEventListener('change', function(){
   fetchExpenses(this.value);
 });
 
+// Export CSV
 exportBtn.addEventListener('click', function(){
   let year = yearFilter.value;
   let url = '/expenses-export';
@@ -156,6 +197,7 @@ exportBtn.addEventListener('click', function(){
   window.location.href = url;
 });
 
+// Toggle View
 viewToggle.addEventListener('change', ()=>{
   if(viewToggle.checked){
     document.querySelector('.table-view-only').style.display='block';
@@ -166,6 +208,7 @@ viewToggle.addEventListener('change', ()=>{
   }
 });
 
+// Auto View Based on Screen
 function setDefaultView() {
   if (window.innerWidth >= 768) {
     viewToggle.checked = true;
