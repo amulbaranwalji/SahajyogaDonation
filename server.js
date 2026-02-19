@@ -180,6 +180,52 @@ app.post("/donors/new", isAuthenticated, async (req, res) => {
   }
 });
 
+// Search donor by mobile
+app.get("/donors/search", isAuthenticated, async (req, res) => {
+  const { mobile } = req.query;
+
+  try {
+    const result = await pool.query(
+      "SELECT id, first_name, last_name, email, mobile FROM donors WHERE mobile = $1",
+      [mobile]
+    );
+
+    res.json(result.rows);
+
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: "Error searching donor" });
+  }
+});
+
+// Create Donation
+app.post("/donations/new", isAuthenticated, async (req, res) => {
+  const { donor_id, program_id, donation_amount, donation_date, payment_mode, remarks } = req.body;
+
+  try {
+    await pool.query(
+      `INSERT INTO donations
+      (donor_id, program_id, donation_amount, donation_date, payment_mode, remarks)
+      VALUES ($1,$2,$3,$4,$5,$6)`,
+      [
+        donor_id,
+        program_id,
+        donation_amount,
+        donation_date,
+        payment_mode,
+        remarks
+      ]
+    );
+
+    res.redirect("/donations-page");
+
+  } catch (err) {
+    console.error(err);
+    res.status(500).send("Error creating donation");
+  }
+});
+
+
 // ===============================
 // PROGRAMS
 // ===============================
