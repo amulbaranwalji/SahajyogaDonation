@@ -8,7 +8,6 @@
 <link rel="stylesheet" href="/css/style.css">
 <style>
 .expense-card { margin-bottom: 1rem; }
-/* Hide card on desktop, table on mobile by default */
 @media(min-width:768px){ .card-view-only { display:none; } }
 @media(max-width:767px){ .table-view-only { display:none; } }
 </style>
@@ -43,15 +42,32 @@
 <div class="container my-4">
 
   <div class="row align-items-center mb-3">
-    <div class="col-12 col-md-6 mb-2 mb-md-0">
+    
+    <div class="col-12 col-md-4 mb-2">
       <a href="/new-expense-page" class="btn btn-success w-100">New Expense</a>
     </div>
-    <div class="col-12 col-md-6 text-md-end">
+
+    <!-- Year Filter -->
+    <div class="col-12 col-md-4 mb-2">
+      <select id="yearFilter" class="form-select">
+        <option value="">-- Select Year --</option>
+        <option>2024</option>
+        <option>2025</option>
+        <option>2026</option>
+        <option>2027</option>
+        <option>2028</option>
+        <option>2029</option>
+        <option>2030</option>
+      </select>
+    </div>
+
+    <div class="col-12 col-md-4 text-md-end">
       <div class="form-check form-switch d-inline-block">
         <input class="form-check-input" type="checkbox" id="viewToggle">
         <label class="form-check-label" for="viewToggle">Table View</label>
       </div>
     </div>
+
   </div>
 
   <!-- Table View -->
@@ -84,18 +100,17 @@
 const expenseTable = document.getElementById('expenseTable');
 const expenseCards = document.getElementById('expenseCards');
 const viewToggle = document.getElementById('viewToggle');
+const yearFilter = document.getElementById('yearFilter');
 let expensesData = [];
 
-// Function to convert date to DD-MM-YYYY
 function formatDate(dateStr) {
   const date = new Date(dateStr);
   const dd = String(date.getDate()).padStart(2, '0');
-  const mm = String(date.getMonth() + 1).padStart(2, '0'); // Months are 0-based
+  const mm = String(date.getMonth() + 1).padStart(2, '0');
   const yyyy = date.getFullYear();
   return `${dd}-${mm}-${yyyy}`;
 }
 
-// Render expenses in table and card views
 function renderExpenses(){
   expenseTable.innerHTML = expensesData.map(e => `
     <tr>
@@ -122,12 +137,24 @@ function renderExpenses(){
   `).join('');
 }
 
-// Fetch expenses data from server
-fetch('/expenses-list')
-.then(res => res.json())
-.then(data => { expensesData = data; renderExpenses(); });
+function fetchExpenses(year=''){
+  let url = '/expenses-list';
+  if(year){
+    url += `?year=${year}`;
+  }
 
-// Toggle between table and card views manually
+  fetch(url)
+    .then(res => res.json())
+    .then(data => {
+      expensesData = data;
+      renderExpenses();
+    });
+}
+
+yearFilter.addEventListener('change', function(){
+  fetchExpenses(this.value);
+});
+
 viewToggle.addEventListener('change', ()=>{
   if(viewToggle.checked){
     document.querySelector('.table-view-only').style.display='block';
@@ -138,24 +165,21 @@ viewToggle.addEventListener('change', ()=>{
   }
 });
 
-// Set default view based on screen width
 function setDefaultView() {
   if (window.innerWidth >= 768) {
-    // Desktop: Table view
     viewToggle.checked = true;
     document.querySelector('.table-view-only').style.display='block';
     document.querySelector('.card-view-only').style.display='none';
   } else {
-    // Mobile: Card view
     viewToggle.checked = false;
     document.querySelector('.table-view-only').style.display='none';
     document.querySelector('.card-view-only').style.display='flex';
   }
 }
 
-// Apply default view on load and resize
 window.addEventListener('resize', setDefaultView);
 setDefaultView();
+fetchExpenses();
 </script>
 
 </body>
