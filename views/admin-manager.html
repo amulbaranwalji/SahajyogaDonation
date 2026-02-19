@@ -17,7 +17,7 @@
 <div class="container mt-4">
 
   <!-- TABS -->
-  <ul class="nav nav-tabs" id="adminTabs">
+  <ul class="nav nav-tabs">
     <li class="nav-item">
       <button class="nav-link active" data-bs-toggle="tab" data-bs-target="#centersTab">All Centers</button>
     </li>
@@ -38,34 +38,42 @@
     <!-- ALL CENTERS -->
     <!-- ====================== -->
     <div class="tab-pane fade show active" id="centersTab">
-      <table class="table table-bordered">
-        <thead class="table-dark">
-          <tr>
-            <th>ID</th>
-            <th>Center Name</th>
-            <th>Center Code</th>
-            <th>Created At</th>
-          </tr>
-        </thead>
-        <tbody id="centersTable"></tbody>
-      </table>
+      <div class="table-responsive">
+        <table class="table table-bordered table-striped">
+          <thead class="table-dark">
+            <tr>
+              <th>ID</th>
+              <th>Name</th>
+              <th>Code</th>
+              <th>Legal Name</th>
+              <th>Email</th>
+              <th>Phone</th>
+              <th>GST</th>
+              <th>Website</th>
+            </tr>
+          </thead>
+          <tbody id="centersTable"></tbody>
+        </table>
+      </div>
     </div>
 
     <!-- ====================== -->
     <!-- ALL CENTER ADMINS -->
     <!-- ====================== -->
     <div class="tab-pane fade" id="adminsTab">
-      <table class="table table-bordered">
-        <thead class="table-dark">
-          <tr>
-            <th>ID</th>
-            <th>Username</th>
-            <th>Center</th>
-            <th>Action</th>
-          </tr>
-        </thead>
-        <tbody id="adminsTable"></tbody>
-      </table>
+      <div class="table-responsive">
+        <table class="table table-bordered table-striped">
+          <thead class="table-dark">
+            <tr>
+              <th>ID</th>
+              <th>Username</th>
+              <th>Center</th>
+              <th>Action</th>
+            </tr>
+          </thead>
+          <tbody id="adminsTable"></tbody>
+        </table>
+      </div>
     </div>
 
     <!-- ====================== -->
@@ -73,6 +81,7 @@
     <!-- ====================== -->
     <div class="tab-pane fade" id="createCenterTab">
       <form action="/centers/create" method="POST">
+
         <div class="mb-3">
           <label>Center Name</label>
           <input type="text" name="center_name" class="form-control" required>
@@ -81,6 +90,36 @@
         <div class="mb-3">
           <label>Center Code</label>
           <input type="text" name="center_code" class="form-control" required>
+        </div>
+
+        <div class="mb-3">
+          <label>Legal Name</label>
+          <input type="text" name="center_legal_name" class="form-control">
+        </div>
+
+        <div class="mb-3">
+          <label>Center Address</label>
+          <textarea name="center_address" class="form-control" rows="3"></textarea>
+        </div>
+
+        <div class="mb-3">
+          <label>Center Email</label>
+          <input type="email" name="center_email" class="form-control">
+        </div>
+
+        <div class="mb-3">
+          <label>Center Phone</label>
+          <input type="text" name="center_phone" class="form-control">
+        </div>
+
+        <div class="mb-3">
+          <label>GST Number</label>
+          <input type="text" name="gst_number" class="form-control">
+        </div>
+
+        <div class="mb-3">
+          <label>Website</label>
+          <input type="text" name="website" class="form-control">
         </div>
 
         <button class="btn btn-success">Create Center</button>
@@ -92,6 +131,7 @@
     <!-- ====================== -->
     <div class="tab-pane fade" id="createAdminTab">
       <form action="/admin/create-user" method="POST">
+
         <div class="mb-3">
           <label>Username</label>
           <input type="text" name="username" class="form-control" required>
@@ -119,25 +159,32 @@ const centersTable = document.getElementById("centersTable");
 const adminsTable = document.getElementById("adminsTable");
 const centerDropdown = document.getElementById("centerDropdown");
 
-/* Load Centers */
+/* LOAD CENTERS */
 fetch("/centers")
   .then(res => res.json())
   .then(data => {
+
     centersTable.innerHTML = data.map(c => `
       <tr>
         <td>${c.id}</td>
         <td>${c.center_name}</td>
         <td>${c.center_code}</td>
-        <td>${new Date(c.created_at).toLocaleDateString()}</td>
+        <td>${c.center_legal_name || ''}</td>
+        <td>${c.center_email || ''}</td>
+        <td>${c.center_phone || ''}</td>
+        <td>${c.gst_number || ''}</td>
+        <td>${c.website || ''}</td>
       </tr>
     `).join("");
 
-    centerDropdown.innerHTML = data.map(c => `
-      <option value="${c.id}">${c.center_name}</option>
-    `).join("");
-  });
+    centerDropdown.innerHTML = data.map(c =>
+      `<option value="${c.id}">${c.center_name}</option>`
+    ).join("");
+  })
+  .catch(err => console.error("Centers load error:", err));
 
-/* Load Center Admins */
+
+/* LOAD CENTER ADMINS */
 fetch("/admin/list")
   .then(res => res.json())
   .then(data => {
@@ -145,7 +192,7 @@ fetch("/admin/list")
       <tr>
         <td>${a.id}</td>
         <td>${a.username}</td>
-        <td>${a.center_name}</td>
+        <td>${a.center_name || ''}</td>
         <td>
           <button class="btn btn-sm btn-warning"
             onclick="resetPassword(${a.id})">
@@ -154,7 +201,9 @@ fetch("/admin/list")
         </td>
       </tr>
     `).join("");
-  });
+  })
+  .catch(err => console.error("Admins load error:", err));
+
 
 function resetPassword(adminId) {
   const newPass = prompt("Enter new password:");
@@ -169,7 +218,8 @@ function resetPassword(adminId) {
   .then(msg => {
     alert(msg);
     location.reload();
-  });
+  })
+  .catch(err => console.error("Reset error:", err));
 }
 </script>
 
