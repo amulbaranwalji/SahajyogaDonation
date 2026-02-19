@@ -6,8 +6,8 @@ import { fileURLToPath } from "url";
 import pkg from "pg";
 
 dotenv.config();
-
 const { Pool } = pkg;
+
 const app = express();
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -234,7 +234,8 @@ app.get("/donations-export", isAuthenticated, async (req, res) => {
 });
 
 // ===============================
-// EXPENSES (UNCHANGED)
+// EXPENSES
+// ===============================
 app.post("/expenses/new", isAuthenticated, async (req, res) => {
   const { program_id, expense_amount, expense_date, expense_description, submitted_by, status, remarks } = req.body;
   try {
@@ -248,6 +249,22 @@ app.post("/expenses/new", isAuthenticated, async (req, res) => {
   } catch (err) {
     console.error(err);
     res.status(500).send("Error creating expense");
+  }
+});
+
+// ✅ FETCH EXPENSES LIST (needed for expenses tab)
+app.get("/expenses-list", isAuthenticated, async (req, res) => {
+  try {
+    const result = await pool.query(`
+      SELECT e.*, p.program_name
+      FROM expenses e
+      LEFT JOIN programs p ON e.program_id = p.id
+      ORDER BY e.id DESC
+    `);
+    res.json(result.rows);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: "Error fetching expenses" });
   }
 });
 
