@@ -16,7 +16,6 @@ import profileRoutes from "./routes/profileRoutes.js";
 import receiptRoutes from "./routes/receiptRoutes.js";
 
 
-
 dotenv.config();
 
 const app = express();
