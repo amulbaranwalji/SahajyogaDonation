@@ -11,21 +11,18 @@
 <style>
 .expense-card { margin-bottom: 1rem; }
 
-/* Desktop */
 @media(min-width:768px){
   .card-view-only { display:none; }
 }
 
-/* Mobile */
 @media(max-width:767px){
   .table-view-only { display:none; }
 }
 </style>
-
 </head>
+
 <body class="d-flex flex-column min-vh-100 bg-light">
 
-<!-- NAVBAR -->
 <nav class="navbar navbar-expand-lg navbar-dark bg-dark px-4">
   <a class="navbar-brand" href="/dashboard">Donor App</a>
   <div class="ms-auto">
@@ -33,25 +30,14 @@
   </div>
 </nav>
 
-<!-- TOP TABS -->
 <div class="bg-white shadow-sm">
   <div class="container">
     <ul class="nav nav-tabs py-2 flex-nowrap overflow-auto">
-      <li class="nav-item">
-        <a class="nav-link" href="/dashboard">Dashboard</a>
-      </li>
-      <li class="nav-item">
-        <a class="nav-link" href="/donors-page">Donors</a>
-      </li>
-      <li class="nav-item">
-        <a class="nav-link" href="/programs-page">Programs</a>
-      </li>
-      <li class="nav-item">
-        <a class="nav-link" href="/donations-page">Donations</a>
-      </li>
-      <li class="nav-item">
-        <a class="nav-link active" href="/expenses-page">Expenses</a>
-      </li>
+      <li class="nav-item"><a class="nav-link" href="/dashboard">Dashboard</a></li>
+      <li class="nav-item"><a class="nav-link" href="/donors-page">Donors</a></li>
+      <li class="nav-item"><a class="nav-link" href="/programs-page">Programs</a></li>
+      <li class="nav-item"><a class="nav-link" href="/donations-page">Donations</a></li>
+      <li class="nav-item"><a class="nav-link active" href="/expenses-page">Expenses</a></li>
     </ul>
   </div>
 </div>
@@ -59,68 +45,67 @@
 <main class="flex-fill">
 <div class="container my-4">
 
-  <!-- ACTION ROW -->
-  <div class="row align-items-center mb-3">
+<div class="row align-items-center mb-3">
 
-    <div class="col-12 col-md-3 mb-2">
-      <a href="/new-expense-page" class="btn btn-success w-100">
-        + New Expense
-      </a>
-    </div>
+<div class="col-12 col-md-3 mb-2">
+<a href="/new-expense-page" class="btn btn-success w-100">
++ New Expense
+</a>
+</div>
 
-    <div class="col-12 col-md-3 mb-2">
-      <select id="yearFilter" class="form-select">
-        <option value="">-- Select Year --</option>
-        <option>2024</option>
-        <option>2025</option>
-        <option>2026</option>
-        <option>2027</option>
-        <option>2028</option>
-        <option>2029</option>
-        <option>2030</option>
-      </select>
-    </div>
+<div class="col-12 col-md-3 mb-2">
+<select id="yearFilter" class="form-select">
+<option value="">-- Select Year --</option>
+<option>2024</option>
+<option>2025</option>
+<option>2026</option>
+<option>2027</option>
+<option>2028</option>
+<option>2029</option>
+<option>2030</option>
+</select>
+</div>
 
-    <div class="col-12 col-md-3 mb-2">
-      <button id="exportCSV" class="btn btn-primary w-100">
-        Export CSV
-      </button>
-    </div>
+<div class="col-12 col-md-3 mb-2">
+<button id="exportCSV" class="btn btn-primary w-100">
+Export CSV
+</button>
+</div>
 
-    <div class="col-12 col-md-3 text-md-end">
-      <div class="form-check form-switch d-inline-block">
-        <input class="form-check-input" type="checkbox" id="viewToggle">
-        <label class="form-check-label">Table View</label>
-      </div>
-    </div>
+<div class="col-12 col-md-3 text-md-end">
+<div class="form-check form-switch d-inline-block">
+<input class="form-check-input" type="checkbox" id="viewToggle">
+<label class="form-check-label">Table View</label>
+</div>
+</div>
 
-  </div>
+</div>
 
-  <!-- TABLE VIEW -->
-  <div class="table-view-only">
-    <table class="table table-bordered table-striped">
-      <thead class="table-dark">
-        <tr>
-          <th>Program</th>
-          <th>Amount</th>
-          <th>Date</th>
-          <th>Status</th>
-          <th>Submitted By</th>
-        </tr>
-      </thead>
-      <tbody id="expenseTable"></tbody>
-    </table>
-  </div>
+<div class="table-view-only">
+<table class="table table-bordered table-striped">
+<thead class="table-dark">
+<tr>
+<th>Program</th>
+<th>Amount</th>
+<th>Date</th>
+<th>Status</th>
+<th>Submitted By</th>
+</tr>
+</thead>
+<tbody id="expenseTable"></tbody>
+</table>
+</div>
 
-  <!-- CARD VIEW -->
-  <div id="expenseCards" class="card-view-only row"></div>
+<div id="expenseCards" class="card-view-only row"></div>
+
+<!-- Pagination -->
+<div class="mt-3 text-center" id="pagination"></div>
 
 </div>
 </main>
 
-<!-- FOOTER -->
 <footer class="bg-dark text-white text-center py-3 mt-auto">
-  © 2026 Donor App
+© 2026 Donor App
 </footer>
 
 <script>
@@ -129,96 +114,118 @@ const expenseCards = document.getElementById('expenseCards');
 const viewToggle = document.getElementById('viewToggle');
 const yearFilter = document.getElementById('yearFilter');
 const exportBtn = document.getElementById('exportCSV');
-let expensesData = [];
+const pagination = document.getElementById('pagination');
 
-// Format Date DD-MM-YYYY
+let expensesData = [];
+let currentPage = 1;
+
+// Format Date
 function formatDate(dateStr) {
-  const date = new Date(dateStr);
-  const dd = String(date.getDate()).padStart(2, '0');
-  const mm = String(date.getMonth() + 1).padStart(2, '0');
-  const yyyy = date.getFullYear();
-  return `${dd}-${mm}-${yyyy}`;
+const date = new Date(dateStr);
+const dd = String(date.getDate()).padStart(2, '0');
+const mm = String(date.getMonth() + 1).padStart(2, '0');
+const yyyy = date.getFullYear();
+return `${dd}-${mm}-${yyyy}`;
 }
 
-// Render Table + Cards
+// Render
 function renderExpenses(){
-  expenseTable.innerHTML = expensesData.map(e => `
-    <tr>
-      <td>${e.program_name || ''}</td>
-      <td>₹ ${e.expense_amount}</td>
-      <td>${formatDate(e.expense_date)}</td>
-      <td>${e.status || ''}</td>
-      <td>${e.submitted_by || ''}</td>
-    </tr>
-  `).join('');
+expenseTable.innerHTML = expensesData.map(e => `
+<tr>
+<td>${e.program_name || ''}</td>
+<td>₹ ${e.expense_amount}</td>
+<td>${formatDate(e.expense_date)}</td>
+<td>${e.status || ''}</td>
+<td>${e.submitted_by || ''}</td>
+</tr>
+`).join('');
 
-  expenseCards.innerHTML = expensesData.map(e => `
-    <div class="col-12 col-md-6 col-lg-4">
-      <div class="card expense-card shadow-sm">
-        <div class="card-body">
-          <h5 class="card-title">${e.program_name || ''}</h5>
-          <p><strong>Amount:</strong> ₹ ${e.expense_amount}</p>
-          <p><strong>Date:</strong> ${formatDate(e.expense_date)}</p>
-          <p><strong>Status:</strong> ${e.status || ''}</p>
-          <p><strong>Submitted By:</strong> ${e.submitted_by || ''}</p>
-        </div>
-      </div>
-    </div>
-  `).join('');
+expenseCards.innerHTML = expensesData.map(e => `
+<div class="col-12 col-md-6 col-lg-4">
+<div class="card expense-card shadow-sm">
+<div class="card-body">
+<h5 class="card-title">${e.program_name || ''}</h5>
+<p><strong>Amount:</strong> ₹ ${e.expense_amount}</p>
+<p><strong>Date:</strong> ${formatDate(e.expense_date)}</p>
+<p><strong>Status:</strong> ${e.status || ''}</p>
+<p><strong>Submitted By:</strong> ${e.submitted_by || ''}</p>
+</div>
+</div>
+</div>
+`).join('');
+}
+
+// Render Pagination
+function renderPagination(totalPages, page){
+let buttons = '';
+
+for(let i=1; i<=totalPages; i++){
+buttons += `
+<button class="btn btn-sm ${i===page?'btn-primary':'btn-outline-primary'} me-1"
+onclick="fetchExpenses('${yearFilter.value}', ${i})">
+${i}
+</button>
+`;
+}
+
+pagination.innerHTML = buttons;
 }
 
 // Fetch Expenses
-function fetchExpenses(year=''){
-  let url = '/expenses-list';
-  if(year){
-    url += `?year=${year}`;
-  }
+function fetchExpenses(year='', page=1){
+currentPage = page;
 
-  fetch(url)
-    .then(res => res.json())
-    .then(data => {
-      expensesData = data;
-      renderExpenses();
-    });
+let url = `/expenses-list?page=${page}`;
+if(year){
+url += `&year=${year}`;
 }
 
-// Year Change
+fetch(url)
+.then(res => res.json())
+.then(result => {
+expensesData = result.data;
+renderExpenses();
+renderPagination(result.totalPages, result.page);
+});
+}
+
+// Year Filter
 yearFilter.addEventListener('change', function(){
-  fetchExpenses(this.value);
+fetchExpenses(this.value, 1);
 });
 
 // Export CSV
 exportBtn.addEventListener('click', function(){
-  let year = yearFilter.value;
-  let url = '/expenses-export';
-  if(year){
-    url += `?year=${year}`;
-  }
-  window.location.href = url;
+let year = yearFilter.value;
+let url = '/expenses-export';
+if(year){
+url += `?year=${year}`;
+}
+window.location.href = url;
 });
 
 // Toggle View
 viewToggle.addEventListener('change', ()=>{
-  if(viewToggle.checked){
-    document.querySelector('.table-view-only').style.display='block';
-    document.querySelector('.card-view-only').style.display='none';
-  } else {
-    document.querySelector('.table-view-only').style.display='none';
-    document.querySelector('.card-view-only').style.display='flex';
-  }
+if(viewToggle.checked){
+document.querySelector('.table-view-only').style.display='block';
+document.querySelector('.card-view-only').style.display='none';
+} else {
+document.querySelector('.table-view-only').style.display='none';
+document.querySelector('.card-view-only').style.display='flex';
+}
 });
 
 // Auto View Based on Screen
 function setDefaultView() {
-  if (window.innerWidth >= 768) {
-    viewToggle.checked = true;
-    document.querySelector('.table-view-only').style.display='block';
-    document.querySelector('.card-view-only').style.display='none';
-  } else {
-    viewToggle.checked = false;
-    document.querySelector('.table-view-only').style.display='none';
-    document.querySelector('.card-view-only').style.display='flex';
-  }
+if (window.innerWidth >= 768) {
+viewToggle.checked = true;
+document.querySelector('.table-view-only').style.display='block';
+document.querySelector('.card-view-only').style.display='none';
+} else {
+viewToggle.checked = false;
+document.querySelector('.table-view-only').style.display='none';
+document.querySelector('.card-view-only').style.display='flex';
+}
 }
 
 window.addEventListener('resize', setDefaultView);
