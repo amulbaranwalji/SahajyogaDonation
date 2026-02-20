@@ -13,6 +13,9 @@ import programRoutes from "./routes/programRoutes.js";
 import expenseRoutes from "./routes/expenseRoutes.js";
 
 import dashboardRoutes from "./routes/dashboardRoutes.js";
+import profileRoutes from "./routes/profileRoutes.js";
+
+
 
 
 
@@ -98,6 +101,7 @@ app.use(donationRoutes);
 app.use(programRoutes);
 app.use(expenseRoutes);
 app.use("/", dashboardRoutes);
+app.use("/", profileRoutes);
 
 // ===============================
 // START SERVER
