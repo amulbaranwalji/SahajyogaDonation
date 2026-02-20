@@ -10,13 +10,14 @@ GET EXPENSES (Pagination + Year + Center Filter)
 ====================================================
 */
 router.get("/expenses-list", isAuthenticated, async (req, res) => {
-  const { year } = req.query;
 
+  const { year } = req.query;
   const page = parseInt(req.query.page) || 1;
   const limit = 5;
   const offset = (page - 1) * limit;
 
   try {
+
     let baseQuery = `
       FROM expenses e
       LEFT JOIN programs p ON e.program_id = p.id
@@ -36,12 +37,6 @@ router.get("/expenses-list", isAuthenticated, async (req, res) => {
       conditions.push(`EXTRACT(YEAR FROM e.expense_date) = $${values.length + 1}`);
       values.push(year);
     }
-
-    //Expense amount Validation
-    if (!expense_amount || parseFloat(expense_amount) <= 0) {
-      return res.status(400).send("Expense amount must be greater than zero.");
-    }
-
 
     let whereClause = conditions.length
       ? " WHERE " + conditions.join(" AND ")
@@ -65,9 +60,9 @@ router.get("/expenses-list", isAuthenticated, async (req, res) => {
       OFFSET $${values.length + 2}
     `;
 
-    values.push(limit, offset);
+    const dataValues = [...values, limit, offset];
 
-    const result = await pool.query(dataQuery, values);
+    const result = await pool.query(dataQuery, dataValues);
 
     res.json({
       data: result.rows,
@@ -89,6 +84,7 @@ CREATE EXPENSE
 ====================================================
 */
 router.post("/expenses/new", isAuthenticated, async (req, res) => {
+
   const {
     program_id,
     expense_amount,
@@ -100,6 +96,20 @@ router.post("/expenses/new", isAuthenticated, async (req, res) => {
   } = req.body;
 
   try {
+
+    // 🔒 Server-side validation
+    if (!expense_amount || parseFloat(expense_amount) <= 0) {
+      return res.status(400).send("Expense amount must be greater than zero.");
+    }
+
+    if (!expense_date) {
+      return res.status(400).send("Expense date is required.");
+    }
+
+    if (!submitted_by || submitted_by.trim() === "") {
+      return res.status(400).send("Submitted By is required.");
+    }
+
     await pool.query(
       `INSERT INTO expenses
        (program_id, expense_amount, expense_date,
@@ -129,13 +139,15 @@ router.post("/expenses/new", isAuthenticated, async (req, res) => {
 
 /*
 ====================================================
-EXPORT EXPENSE CSV (UNCHANGED LOGIC)
+EXPORT EXPENSE CSV
 ====================================================
 */
 router.get("/expenses-export", isAuthenticated, async (req, res) => {
+
   const { year } = req.query;
 
   try {
+
     let query = `
       SELECT 
         p.program_name,
