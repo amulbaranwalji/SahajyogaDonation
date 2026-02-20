@@ -102,6 +102,10 @@ app.get("/new-expense-page", requireLogin, (req, res) =>
   res.sendFile(path.join(__dirname, "views", "new-expense.html"))
 );
 
+app.get("/receipt-verify", (req, res) =>
+  res.sendFile(path.join(__dirname, "views", "receipt-verify.html"))
+);
+
 
 
 // ===============================
