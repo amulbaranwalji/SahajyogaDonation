@@ -20,7 +20,7 @@ router.get("/donors/search", isAuthenticated, async (req, res) => {
     `;
     let values = [mobile];
 
-    // Restrict to center if CenterAdmin
+    // Center restriction
     if (req.session.user.role === "CenterAdmin") {
       query += " AND center_id = $2";
       values.push(req.session.user.center_id);
@@ -38,24 +38,18 @@ router.get("/donors/search", isAuthenticated, async (req, res) => {
 
 /*
 ====================================================
-GET DONATIONS LIST (WITH YEAR + CENTER FILTER)
+GET DONATIONS LIST (PAGINATION + YEAR + CENTER)
 ====================================================
 */
 router.get("/donations-list", isAuthenticated, async (req, res) => {
   const { year } = req.query;
 
+  const page = parseInt(req.query.page) || 1;
+  const limit = 5;
+  const offset = (page - 1) * limit;
+
   try {
-    let query = `
-      SELECT 
-        d.id,
-        d.receipt_number,
-        d.donation_amount,
-        d.donation_date,
-        d.payment_mode,
-        d.remarks,
-        dn.first_name,
-        dn.last_name,
-        p.program_name
+    let baseQuery = `
       FROM donations d
       JOIN donors dn ON d.donor_id = dn.id
       LEFT JOIN programs p ON d.program_id = p.id
@@ -76,14 +70,47 @@ router.get("/donations-list", isAuthenticated, async (req, res) => {
       values.push(year);
     }
 
-    if (conditions.length > 0) {
-      query += " WHERE " + conditions.join(" AND ");
-    }
+    let whereClause = conditions.length
+      ? " WHERE " + conditions.join(" AND ")
+      : "";
 
-    query += " ORDER BY d.donation_date DESC, d.id DESC";
+    // Total count
+    const totalResult = await pool.query(
+      `SELECT COUNT(*) ${baseQuery} ${whereClause}`,
+      values
+    );
 
-    const result = await pool.query(query, values);
-    res.json(result.rows);
+    const total = parseInt(totalResult.rows[0].count);
+
+    // Data query
+    const dataQuery = `
+      SELECT 
+        d.id,
+        d.receipt_number,
+        d.donation_amount,
+        d.donation_date,
+        d.payment_mode,
+        d.remarks,
+        dn.first_name,
+        dn.last_name,
+        p.program_name
+      ${baseQuery}
+      ${whereClause}
+      ORDER BY d.donation_date DESC, d.id DESC
+      LIMIT $${values.length + 1}
+      OFFSET $${values.length + 2}
+    `;
+
+    values.push(limit, offset);
+
+    const result = await pool.query(dataQuery, values);
+
+    res.json({
+      data: result.rows,
+      total,
+      page,
+      totalPages: Math.ceil(total / limit)
+    });
 
   } catch (err) {
     console.error("Donation list error:", err);
@@ -135,23 +162,14 @@ router.post("/donations/new", isAuthenticated, async (req, res) => {
 
 /*
 ====================================================
-EXPORT DONATIONS CSV
+EXPORT DONATIONS CSV (CENTER + YEAR SAFE)
 ====================================================
 */
 router.get("/donations-export", isAuthenticated, async (req, res) => {
   const { year } = req.query;
 
   try {
-    let query = `
-      SELECT 
-        d.receipt_number,
-        dn.first_name,
-        dn.last_name,
-        p.program_name,
-        d.donation_amount,
-        d.donation_date,
-        d.payment_mode,
-        d.remarks
+    let baseQuery = `
       FROM donations d
       JOIN donors dn ON d.donor_id = dn.id
       LEFT JOIN programs p ON d.program_id = p.id
@@ -172,21 +190,52 @@ router.get("/donations-export", isAuthenticated, async (req, res) => {
       values.push(year);
     }
 
-    if (conditions.length > 0) {
-      query += " WHERE " + conditions.join(" AND ");
-    }
+    let whereClause = conditions.length
+      ? " WHERE " + conditions.join(" AND ")
+      : "";
 
-    query += " ORDER BY d.donation_date DESC, d.id DESC";
+    const query = `
+      SELECT 
+        d.receipt_number,
+        dn.first_name,
+        dn.last_name,
+        p.program_name,
+        d.donation_amount,
+        d.donation_date,
+        d.payment_mode,
+        d.remarks
+      ${baseQuery}
+      ${whereClause}
+      ORDER BY d.donation_date DESC
+    `;
 
     const result = await pool.query(query, values);
 
     if (!result.rows.length)
       return res.send("No data available");
 
-    // Convert to CSV
-    const headers = Object.keys(result.rows[0]).join(",");
-    const rows = result.rows.map(row =>
-      Object.values(row)
+    const headers = [
+      "Receipt Number",
+      "First Name",
+      "Last Name",
+      "Program",
+      "Amount",
+      "Donation Date",
+      "Payment Mode",
+      "Remarks"
+    ].join(",");
+
+    const rows = result.rows.map(r =>
+      [
+        r.receipt_number,
+        r.first_name,
+        r.last_name,
+        r.program_name,
+        r.donation_amount,
+        r.donation_date,
+        r.payment_mode,
+        r.remarks
+      ]
         .map(val => `"${val ?? ""}"`)
         .join(",")
     );
