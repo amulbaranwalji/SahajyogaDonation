@@ -117,6 +117,7 @@ const viewToggle = document.getElementById('viewToggle');
 const searchInput = document.getElementById('searchInput');
 
 let donorsData = [];
+let totalPages = 1;
 let currentSearch = "";
 
 /* =========================
@@ -126,10 +127,11 @@ async function fetchDonors(page=1) {
   const res = await fetch(`/donors?page=${page}&search=${currentSearch}`);
   const result = await res.json();
 
-  // Support paginated backend
   donorsData = result.data || [];
+  totalPages = result.totalPages || 1;
+
   renderDonors();
-  renderPagination(result.totalPages || 1, result.page || 1);
+  renderPagination(page);
 }
 
 /* =========================
@@ -144,6 +146,7 @@ function searchDonors(){
    RENDER DATA
 ========================= */
 function renderDonors(){
+
   if(donorsData.length === 0){
     donorTable.innerHTML = `<tr><td colspan="7" class="text-center">No Records Found</td></tr>`;
     donorCards.innerHTML = `<div class="col-12 text-center">No Records Found</div>`;
@@ -177,14 +180,12 @@ function renderDonors(){
           <p><strong>Mobile:</strong> ${d.mobile || '-'}</p>
           <p><strong>City:</strong> ${d.city || '-'}</p>
           <p><strong>State:</strong> ${d.state || '-'}</p>
-
           <div class="mt-2 text-end">
             <a href="/edit-donor-page/${d.id}" 
                class="btn btn-sm btn-warning">
                Edit
             </a>
           </div>
-
         </div>
       </div>
     </div>
@@ -194,7 +195,7 @@ function renderDonors(){
 /* =========================
    PAGINATION
 ========================= */
-function renderPagination(totalPages, current){
+function renderPagination(current){
   const pagination = document.getElementById('pagination');
   pagination.innerHTML = '';
 
