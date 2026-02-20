@@ -18,6 +18,9 @@ router.get("/dashboard-stats", isAuthenticated, async (req, res) => {
     let donationConditions = [];
     let donationValues = [];
 
+    let expenseConditions = [];
+    let expenseValues = [];
+
     let simpleCenterCondition = "";
     let simpleCenterValues = [];
 
@@ -31,6 +34,9 @@ router.get("/dashboard-stats", isAuthenticated, async (req, res) => {
 
       donationConditions.push(`center_id = $${donationValues.length + 1}`);
       donationValues.push(req.session.user.center_id);
+
+      expenseConditions.push(`center_id = $${expenseValues.length + 1}`);
+      expenseValues.push(req.session.user.center_id);
     }
 
     // ==========================
@@ -38,15 +44,18 @@ router.get("/dashboard-stats", isAuthenticated, async (req, res) => {
     // ==========================
     if (fy) {
       const [startYear] = fy.split("-");
-
       const startDate = `${startYear}-04-01`;
       const endDate = `${parseInt(startYear) + 1}-03-31`;
 
       donationConditions.push(
         `donation_date BETWEEN $${donationValues.length + 1} AND $${donationValues.length + 2}`
       );
-
       donationValues.push(startDate, endDate);
+
+      expenseConditions.push(
+        `expense_date BETWEEN $${expenseValues.length + 1} AND $${expenseValues.length + 2}`
+      );
+      expenseValues.push(startDate, endDate);
     }
 
     const donationWhereClause =
@@ -54,8 +63,13 @@ router.get("/dashboard-stats", isAuthenticated, async (req, res) => {
         ? "WHERE " + donationConditions.join(" AND ")
         : "";
 
+    const expenseWhereClause =
+      expenseConditions.length
+        ? "WHERE " + expenseConditions.join(" AND ")
+        : "";
+
     // ==========================
-    // TOTAL COUNTS
+    // SIMPLE COUNTS
     // ==========================
 
     const totalDonors = await pool.query(
@@ -68,16 +82,20 @@ router.get("/dashboard-stats", isAuthenticated, async (req, res) => {
       simpleCenterValues
     );
 
-    const totalExpenses = await pool.query(
+    const totalExpensesCount = await pool.query(
       `SELECT COUNT(*) FROM expenses ${simpleCenterCondition}`,
       simpleCenterValues
     );
+
+    // ==========================
+    // DONATION STATS
+    // ==========================
 
     const donationStats = await pool.query(
       `
       SELECT 
         COUNT(*) as total_donations,
-        COALESCE(SUM(donation_amount),0) as total_amount
+        COALESCE(SUM(donation_amount),0) as total_donation_amount
       FROM donations
       ${donationWhereClause}
       `,
@@ -85,15 +103,26 @@ router.get("/dashboard-stats", isAuthenticated, async (req, res) => {
     );
 
     // ==========================
-    // RESPONSE
+    // EXPENSE AMOUNT FOR FY
     // ==========================
+
+    const expenseStats = await pool.query(
+      `
+      SELECT 
+        COALESCE(SUM(expense_amount),0) as total_expense_amount
+      FROM expenses
+      ${expenseWhereClause}
+      `,
+      expenseValues
+    );
 
     res.json({
       totalDonors: totalDonors.rows[0].count,
       totalPrograms: totalPrograms.rows[0].count,
-      totalExpenses: totalExpenses.rows[0].count,
+      totalExpenses: totalExpensesCount.rows[0].count,
       totalDonations: donationStats.rows[0].total_donations,
-      totalAmount: donationStats.rows[0].total_amount
+      totalDonationAmount: donationStats.rows[0].total_donation_amount,
+      totalExpenseAmount: expenseStats.rows[0].total_expense_amount
     });
 
   } catch (err) {
