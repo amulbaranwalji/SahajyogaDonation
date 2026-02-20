@@ -12,6 +12,11 @@ import donationRoutes from "./routes/donationRoutes.js";
 import programRoutes from "./routes/programRoutes.js";
 import expenseRoutes from "./routes/expenseRoutes.js";
 
+import dashboardRoutes from "./routes/dashboardRoutes.js";
+
+
+
+
 dotenv.config();
 
 const app = express();
@@ -92,6 +97,7 @@ app.use(donorRoutes);
 app.use(donationRoutes);
 app.use(programRoutes);
 app.use(expenseRoutes);
+app.use("/", dashboardRoutes);
 
 // ===============================
 // START SERVER
