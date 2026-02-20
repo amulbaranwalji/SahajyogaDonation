@@ -1,12 +1,12 @@
 {
   "name": "sfdc-temp",
   "version": "1.0.0",
+  "description": "Donation Management System",
   "type": "module",
-  "main": "index.js",
+  "main": "server.js",
   "scripts": {
-    "start": "node index.js",
-    "start:donor": "node server.js",
-    "start:second": "node index.js"
+    "start": "node server.js",
+    "dev": "node server.js"
   },
   "dependencies": {
     "bcrypt": "^5.1.1",
@@ -14,6 +14,7 @@
     "express": "^4.19.2",
     "express-session": "^1.17.3",
     "pg": "^8.11.5",
-    "uuid": "^9.0.1"
+    "uuid": "^9.0.1",
+    "pdfkit": "^0.14.0"
   }
 }
