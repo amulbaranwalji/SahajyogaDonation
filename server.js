@@ -11,14 +11,8 @@ import donorRoutes from "./routes/donorRoutes.js";
 import donationRoutes from "./routes/donationRoutes.js";
 import programRoutes from "./routes/programRoutes.js";
 import expenseRoutes from "./routes/expenseRoutes.js";
-
 import dashboardRoutes from "./routes/dashboardRoutes.js";
 import profileRoutes from "./routes/profileRoutes.js";
-
-
-
-
-
 
 dotenv.config();
 
@@ -42,6 +36,16 @@ app.use(session({
 app.use(express.static(path.join(__dirname, "public")));
 
 // ===============================
+// SIMPLE AUTH CHECK FOR HTML PAGES
+// ===============================
+function requireLogin(req, res, next) {
+  if (!req.session.user) {
+    return res.redirect("/");
+  }
+  next();
+}
+
+// ===============================
 // ROOT ROUTE (Login Page)
 // ===============================
 app.get("/", (req, res) => {
@@ -51,55 +55,49 @@ app.get("/", (req, res) => {
 // ===============================
 // PAGE ROUTES (Protected HTML)
 // ===============================
-app.get("/dashboard", (req, res) =>
+app.get("/dashboard", requireLogin, (req, res) =>
   res.sendFile(path.join(__dirname, "views", "dashboard.html"))
 );
 
-app.get("/admin-manager", (req, res) =>
+app.get("/admin-manager", requireLogin, (req, res) =>
   res.sendFile(path.join(__dirname, "views", "admin-manager.html"))
 );
 
-app.get("/donors-page", (req, res) =>
+app.get("/donors-page", requireLogin, (req, res) =>
   res.sendFile(path.join(__dirname, "views", "donors.html"))
 );
 
-app.get("/new-donor-page", (req, res) =>
+app.get("/new-donor-page", requireLogin, (req, res) =>
   res.sendFile(path.join(__dirname, "views", "new-donor.html"))
 );
 
-app.get("/programs-page", (req, res) =>
-  res.sendFile(path.join(__dirname, "views", "programs.html"))
-);
-
-app.get("/new-program-page", (req, res) =>
-  res.sendFile(path.join(__dirname, "views", "new-program.html"))
-);
-
-app.get("/donations-page", (req, res) =>
-  res.sendFile(path.join(__dirname, "views", "donations.html"))
-);
-
-app.get("/new-donation-page", (req, res) =>
-  res.sendFile(path.join(__dirname, "views", "new-donation.html"))
-);
-
-app.get("/expenses-page", (req, res) =>
-  res.sendFile(path.join(__dirname, "views", "expenses.html"))
-);
-
-app.get("/new-expense-page", (req, res) =>
-  res.sendFile(path.join(__dirname, "views", "new-expense.html"))
-);
-
-app.get("/edit-donor-page", (req, res) =>
+app.get("/edit-donor-page/:id", requireLogin, (req, res) =>
   res.sendFile(path.join(__dirname, "views", "edit-donor.html"))
 );
 
+app.get("/programs-page", requireLogin, (req, res) =>
+  res.sendFile(path.join(__dirname, "views", "programs.html"))
+);
 
-//app.get("/edit-donor-page", isAuthenticated, (req, res) => {
-//  res.sendFile("edit-donor.html", { root: "public" });
-//});
+app.get("/new-program-page", requireLogin, (req, res) =>
+  res.sendFile(path.join(__dirname, "views", "new-program.html"))
+);
 
+app.get("/donations-page", requireLogin, (req, res) =>
+  res.sendFile(path.join(__dirname, "views", "donations.html"))
+);
+
+app.get("/new-donation-page", requireLogin, (req, res) =>
+  res.sendFile(path.join(__dirname, "views", "new-donation.html"))
+);
+
+app.get("/expenses-page", requireLogin, (req, res) =>
+  res.sendFile(path.join(__dirname, "views", "expenses.html"))
+);
+
+app.get("/new-expense-page", requireLogin, (req, res) =>
+  res.sendFile(path.join(__dirname, "views", "new-expense.html"))
+);
 
 // ===============================
 // REGISTER API ROUTES
