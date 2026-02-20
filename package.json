@@ -2,10 +2,11 @@
   "name": "sfdc-temp",
   "version": "1.0.0",
   "type": "module",
-  "main": "server.js",
+  "main": "index.js",
   "scripts": {
-    "start": "node server.js",
-    "dev": "node server.js"
+    "start": "node index.js",
+    "start:donor": "node server.js",
+    "start:second": "node index.js"
   },
   "dependencies": {
     "bcrypt": "^5.1.1",
@@ -14,6 +15,6 @@
     "express-session": "^1.17.3",
     "pg": "^8.11.5",
     "uuid": "^9.0.1",
-    "pdfkit": "^0.14.0"
+     "pdfkit": "^0.14.0"
   }
 }
