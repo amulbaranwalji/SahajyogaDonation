@@ -6,15 +6,16 @@
 <title>Programs</title>
 <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
 <link rel="stylesheet" href="/css/style.css">
+
 <style>
 .program-card { margin-bottom: 1rem; }
-@media(min-width:768px){ .card-view-only { display:none; } } /* Card hidden on desktop */
-@media(max-width:767px){ .table-view-only { display:none; } } /* Table hidden on mobile */
+@media(min-width:768px){ .card-view-only { display:none; } }
+@media(max-width:767px){ .table-view-only { display:none; } }
 </style>
 </head>
+
 <body class="d-flex flex-column min-vh-100 bg-light">
 
-<!-- Header & Tabs -->
 <nav class="navbar navbar-expand-lg navbar-dark bg-dark px-4">
   <a class="navbar-brand" href="/dashboard">Donor App</a>
   <div class="ms-auto dropdown">
@@ -42,60 +43,67 @@
 <main class="flex-fill">
 <div class="container my-4">
 
-  <div class="row align-items-center mb-3">
-    <div class="col-12 col-md-6 mb-2 mb-md-0">
-      <a href="/new-program-page" class="btn btn-success w-100">New Program</a>
-    </div>
-    <div class="col-12 col-md-6 text-md-end">
-      <div class="form-check form-switch d-inline-block">
-        <input class="form-check-input" type="checkbox" id="viewToggle">
-        <label class="form-check-label" for="viewToggle">Table View</label>
-      </div>
+<div class="row align-items-center mb-3">
+  <div class="col-12 col-md-6 mb-2 mb-md-0">
+    <a href="/new-program-page" class="btn btn-success w-100">New Program</a>
+  </div>
+  <div class="col-12 col-md-6 text-md-end">
+    <div class="form-check form-switch d-inline-block">
+      <input class="form-check-input" type="checkbox" id="viewToggle">
+      <label class="form-check-label">Table View</label>
     </div>
   </div>
+</div>
 
-  <!-- Table View -->
-  <div class="table-view-only">
-    <table class="table table-striped table-bordered">
-      <thead class="table-dark">
-        <tr>
-          <th>Program Name</th>
-          <th>Description</th>
-          <th>Program Date</th>
-        </tr>
-      </thead>
-      <tbody id="programTable"></tbody>
-    </table>
-  </div>
+<!-- Table View -->
+<div class="table-view-only">
+  <table class="table table-striped table-bordered">
+    <thead class="table-dark">
+      <tr>
+        <th>Program Name</th>
+        <th>Description</th>
+        <th>Program Date</th>
+      </tr>
+    </thead>
+    <tbody id="programTable"></tbody>
+  </table>
+</div>
 
-  <!-- Card View -->
-  <div id="programCards" class="card-view-only row"></div>
+<!-- Card View -->
+<div id="programCards" class="card-view-only row"></div>
+
+<!-- Pagination -->
+<div class="mt-3 text-center" id="pagination"></div>
 
 </div>
 </main>
 
 <footer class="bg-dark text-white text-center py-3 mt-auto">
-  © 2026 Donor App
+© 2026 Donor App
 </footer>
 
 <script>
 const programTable = document.getElementById('programTable');
 const programCards = document.getElementById('programCards');
 const viewToggle = document.getElementById('viewToggle');
-let programsData = [];
+const pagination = document.getElementById('pagination');
 
-// Format date as DD-MM-YYYY
+let programsData = [];
+let currentPage = 1;
+
+// Format date
 function formatDate(dateStr) {
   if (!dateStr) return '';
   const date = new Date(dateStr);
   const dd = String(date.getDate()).padStart(2, '0');
-  const mm = String(date.getMonth() + 1).padStart(2, '0'); // Months are 0-based
+  const mm = String(date.getMonth() + 1).padStart(2, '0');
   const yyyy = date.getFullYear();
   return `${dd}-${mm}-${yyyy}`;
 }
 
-// Render programs in table and card views
+// Render programs
 function renderPrograms() {
+
   programTable.innerHTML = programsData.map(p => `
     <tr>
       <td>${p.program_name}</td>
@@ -117,12 +125,36 @@ function renderPrograms() {
   `).join('');
 }
 
-// Fetch programs data from server
-fetch('/programs')
-.then(res => res.json())
-.then(data => { programsData = data; renderPrograms(); });
+// Render pagination
+function renderPagination(totalPages, page){
+  let buttons = '';
 
-// Toggle between table and card views
+  for(let i=1; i<=totalPages; i++){
+    buttons += `
+      <button class="btn btn-sm ${i===page?'btn-primary':'btn-outline-primary'} me-1"
+      onclick="fetchPrograms(${i})">
+        ${i}
+      </button>
+    `;
+  }
+
+  pagination.innerHTML = buttons;
+}
+
+// Fetch programs
+function fetchPrograms(page=1){
+  currentPage = page;
+
+  fetch(`/programs?page=${page}`)
+  .then(res => res.json())
+  .then(result => {
+    programsData = result.data;
+    renderPrograms();
+    renderPagination(result.totalPages, result.page);
+  });
+}
+
+// Toggle View
 viewToggle.addEventListener('change', () => {
   if(viewToggle.checked){
     document.querySelector('.table-view-only').style.display = 'block';
@@ -133,15 +165,13 @@ viewToggle.addEventListener('change', () => {
   }
 });
 
-// Default view based on screen size
+// Default View
 function setDefaultView() {
   if (window.innerWidth >= 768) {
-    // Desktop: Table view
     viewToggle.checked = true;
     document.querySelector('.table-view-only').style.display = 'block';
     document.querySelector('.card-view-only').style.display = 'none';
   } else {
-    // Mobile: Card view
     viewToggle.checked = false;
     document.querySelector('.table-view-only').style.display = 'none';
     document.querySelector('.card-view-only').style.display = 'flex';
@@ -150,7 +180,9 @@ function setDefaultView() {
 
 window.addEventListener('resize', setDefaultView);
 setDefaultView();
+fetchPrograms();
 </script>
 
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
 </body>
 </html>
