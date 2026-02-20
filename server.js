@@ -13,6 +13,9 @@ import programRoutes from "./routes/programRoutes.js";
 import expenseRoutes from "./routes/expenseRoutes.js";
 import dashboardRoutes from "./routes/dashboardRoutes.js";
 import profileRoutes from "./routes/profileRoutes.js";
+import receiptRoutes from "./routes/receiptRoutes.js";
+
+
 
 dotenv.config();
 
@@ -99,6 +102,8 @@ app.get("/new-expense-page", requireLogin, (req, res) =>
   res.sendFile(path.join(__dirname, "views", "new-expense.html"))
 );
 
+
+
 // ===============================
 // REGISTER API ROUTES
 // ===============================
@@ -110,6 +115,7 @@ app.use(programRoutes);
 app.use(expenseRoutes);
 app.use("/", dashboardRoutes);
 app.use("/", profileRoutes);
+app.use(receiptRoutes);
 
 // ===============================
 // START SERVER
