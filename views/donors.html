@@ -17,7 +17,7 @@
 
 <body class="d-flex flex-column min-vh-100 bg-light">
 
-<!-- ✅ UPDATED NAVBAR -->
+<!-- NAVBAR -->
 <nav class="navbar navbar-expand-lg navbar-dark bg-dark px-4">
   <a class="navbar-brand d-flex align-items-center" href="/dashboard">
     <img src="/images/logo.png" width="40" height="40" class="me-2">
@@ -87,6 +87,7 @@
           <th>Mobile</th>
           <th>City</th>
           <th>State</th>
+          <th>Action</th>
         </tr>
       </thead>
       <tbody id="donorTable"></tbody>
@@ -116,6 +117,7 @@ const viewToggle = document.getElementById('viewToggle');
 const searchInput = document.getElementById('searchInput');
 
 let donorsData = [];
+let totalPages = 1;
 let currentSearch = "";
 
 /* =========================
@@ -123,7 +125,11 @@ let currentSearch = "";
 ========================= */
 async function fetchDonors(page=1) {
   const res = await fetch(`/donors?page=${page}&search=${currentSearch}`);
-  donorsData = await res.json();
+  const result = await res.json();
+
+  donorsData = result.data || [];
+  totalPages = result.totalPages || 1;
+
   renderDonors();
   renderPagination(page);
 }
@@ -140,12 +146,14 @@ function searchDonors(){
    RENDER DATA
 ========================= */
 function renderDonors(){
+
   if(donorsData.length === 0){
-    donorTable.innerHTML = `<tr><td colspan="6" class="text-center">No Records Found</td></tr>`;
+    donorTable.innerHTML = `<tr><td colspan="7" class="text-center">No Records Found</td></tr>`;
     donorCards.innerHTML = `<div class="col-12 text-center">No Records Found</div>`;
     return;
   }
 
+  // TABLE VIEW
   donorTable.innerHTML = donorsData.map(d => `
     <tr>
       <td>${d.donor_id}</td>
@@ -154,9 +162,16 @@ function renderDonors(){
       <td>${d.mobile || '-'}</td>
       <td>${d.city || '-'}</td>
       <td>${d.state || '-'}</td>
+      <td>
+        <a href="/edit-donor-page/${d.id}" 
+           class="btn btn-sm btn-warning">
+           Edit
+        </a>
+      </td>
     </tr>
   `).join('');
 
+  // CARD VIEW
   donorCards.innerHTML = donorsData.map(d => `
     <div class="col-12 col-md-6 col-lg-4">
       <div class="card donor-card shadow-sm">
@@ -167,6 +182,14 @@ function renderDonors(){
           <p><strong>Mobile:</strong> ${d.mobile || '-'}</p>
           <p><strong>City:</strong> ${d.city || '-'}</p>
           <p><strong>State:</strong> ${d.state || '-'}</p>
+
+          <div class="text-end mt-2">
+            <a href="/edit-donor-page/${d.id}" 
+               class="btn btn-sm btn-warning">
+               Edit
+            </a>
+          </div>
+
         </div>
       </div>
     </div>
@@ -180,7 +203,7 @@ function renderPagination(current){
   const pagination = document.getElementById('pagination');
   pagination.innerHTML = '';
 
-  for(let i=1;i<=5;i++){
+  for(let i=1;i<=totalPages;i++){
     const li = document.createElement('li');
     li.className = `page-item ${i===current?'active':''}`;
     li.innerHTML = `<a class="page-link" href="#">${i}</a>`;
