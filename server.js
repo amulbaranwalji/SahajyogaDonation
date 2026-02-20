@@ -91,6 +91,11 @@ app.get("/new-expense-page", (req, res) =>
   res.sendFile(path.join(__dirname, "views", "new-expense.html"))
 );
 
+app.get("/edit-donor-page", isAuthenticated, (req, res) => {
+  res.sendFile("edit-donor.html", { root: "public" });
+});
+
+
 // ===============================
 // REGISTER API ROUTES
 // ===============================
