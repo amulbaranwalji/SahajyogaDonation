@@ -37,6 +37,12 @@ router.get("/expenses-list", isAuthenticated, async (req, res) => {
       values.push(year);
     }
 
+    //Expense amount Validation
+    if (!expense_amount || parseFloat(expense_amount) <= 0) {
+      return res.status(400).send("Expense amount must be greater than zero.");
+    }
+
+
     let whereClause = conditions.length
       ? " WHERE " + conditions.join(" AND ")
       : "";
