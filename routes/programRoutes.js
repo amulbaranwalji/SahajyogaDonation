@@ -73,13 +73,51 @@ router.get("/programs", isAuthenticated, async (req, res) => {
 
 /*
 ====================================================
+PROGRAM DROPDOWN (For Donation & Expense Forms)
+====================================================
+*/
+router.get("/programs-dropdown", isAuthenticated, async (req, res) => {
+
+  try {
+
+    let query = `
+      SELECT id, program_name
+      FROM programs
+    `;
+
+    let values = [];
+
+    // Filter by center for CenterAdmin
+    if (req.session.user.role === "CenterAdmin") {
+      query += " WHERE center_id = $1";
+      values.push(req.session.user.center_id);
+    }
+
+    query += " ORDER BY program_name ASC";
+
+    const result = await pool.query(query, values);
+
+    res.json(result.rows);
+
+  } catch (err) {
+    console.error("Program dropdown error:", err);
+    res.status(500).json({ error: "Failed to load programs" });
+  }
+
+});
+
+
+/*
+====================================================
 CREATE PROGRAM
 ====================================================
 */
 router.post("/programs/new", isAuthenticated, async (req, res) => {
+
   const { program_name, description, program_date } = req.body;
 
   try {
+
     await pool.query(
       `INSERT INTO programs
        (program_name, description, program_date, center_id)
