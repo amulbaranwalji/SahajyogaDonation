@@ -32,6 +32,11 @@ router.get("/donors", isAuthenticated, async (req, res) => {
         OR last_name ILIKE $${values.length + 1})`);
       values.push(`%${search}%`);
     }
+    // donation amount validation
+    if (!donation_amount || parseFloat(donation_amount) <= 0) {
+    return res.status(400).send("Donation amount must be greater than zero.");
+    }
+
 
     let query = "SELECT * FROM donors";
     if (conditions.length)
