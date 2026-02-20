@@ -91,9 +91,14 @@ app.get("/new-expense-page", (req, res) =>
   res.sendFile(path.join(__dirname, "views", "new-expense.html"))
 );
 
-app.get("/edit-donor-page", isAuthenticated, (req, res) => {
-  res.sendFile("edit-donor.html", { root: "public" });
-});
+app.get("/edit-donor-page", (req, res) =>
+  res.sendFile(path.join(__dirname, "views", "edit-donor.html"))
+);
+
+
+//app.get("/edit-donor-page", isAuthenticated, (req, res) => {
+//  res.sendFile("edit-donor.html", { root: "public" });
+//});
 
 
 // ===============================
