@@ -15,24 +15,67 @@
 .stat-card:hover {
   transform: translateY(-5px);
 }
+@media(max-width: 576px){
+  .stat-card { margin-bottom: 1rem; }
+}
 </style>
 </head>
 
 <body class="d-flex flex-column min-vh-100 bg-light">
 
-<nav class="navbar navbar-dark bg-dark px-4">
-  <a class="navbar-brand" href="/dashboard">Donor App</a>
-  <a href="/logout" class="btn btn-sm btn-danger">Logout</a>
+<!-- NAVBAR -->
+<nav class="navbar navbar-expand-lg navbar-dark bg-dark px-4">
+  <a class="navbar-brand d-flex align-items-center" href="/dashboard">
+    <img src="/images/logo.png" width="40" height="40" class="me-2">
+    Donor App
+  </a>
+
+  <div class="ms-auto dropdown">
+    <a class="text-white dropdown-toggle text-decoration-none" href="#" data-bs-toggle="dropdown">
+      Welcome
+    </a>
+    <ul class="dropdown-menu dropdown-menu-end">
+      <li><a class="dropdown-item" href="/profile-page">View Profile</a></li>
+      <li><hr class="dropdown-divider"></li>
+      <li><a class="dropdown-item text-danger" href="/logout">Logout</a></li>
+    </ul>
+  </div>
 </nav>
 
+<!-- TOP TABS -->
+<div class="bg-white shadow-sm">
+  <div class="container">
+    <ul class="nav nav-tabs py-2 flex-nowrap overflow-auto">
+      <li class="nav-item">
+        <a class="nav-link active" href="/dashboard">Dashboard</a>
+      </li>
+      <li class="nav-item">
+        <a class="nav-link" href="/donors-page">Donors</a>
+      </li>
+      <li class="nav-item">
+        <a class="nav-link" href="/programs-page">Programs</a>
+      </li>
+      <li class="nav-item">
+        <a class="nav-link" href="/donations-page">Donations</a>
+      </li>
+      <li class="nav-item">
+        <a class="nav-link" href="/expenses-page">Expenses</a>
+      </li>
+    </ul>
+  </div>
+</div>
+
+<!-- MAIN CONTENT -->
 <main class="flex-fill">
 <div class="container my-4">
 
+<!-- Header + FY Filter -->
 <div class="d-flex justify-content-between align-items-center mb-4">
-  <h4>Dashboard Overview</h4>
+  <h4 class="mb-0">Dashboard Overview</h4>
   <select id="fyFilter" class="form-select w-auto"></select>
 </div>
 
+<!-- STAT CARDS -->
 <div class="row g-3">
 
   <div class="col-md-3">
@@ -73,6 +116,7 @@
 
 </div>
 
+<!-- AMOUNT SECTION -->
 <div class="row mt-4">
 
   <div class="col-md-6">
@@ -98,14 +142,15 @@
 </div>
 </main>
 
+<!-- FOOTER -->
 <footer class="bg-dark text-white text-center py-3 mt-auto">
-© 2026 Donor App
+  © 2026 Donor App. All Rights Reserved.
 </footer>
 
 <script>
+// Generate Financial Years
 const fyFilter = document.getElementById("fyFilter");
 
-// Generate Indian Financial Years
 function generateFY() {
   const currentYear = new Date().getFullYear();
   for(let i=currentYear; i>=2020; i--){
@@ -116,6 +161,7 @@ function generateFY() {
     fyFilter.appendChild(option);
   }
 }
+
 generateFY();
 
 function loadDashboard(fy=''){
