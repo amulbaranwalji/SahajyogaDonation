@@ -52,6 +52,101 @@ router.get("/donors", isAuthenticated, async (req, res) => {
 
 /*
 ====================================================
+GET SINGLE DONOR (For Edit Page)
+====================================================
+*/
+router.get("/donors/:id", isAuthenticated, async (req, res) => {
+  const donorId = req.params.id;
+
+  try {
+
+    let query = "SELECT * FROM donors WHERE id = $1";
+    let values = [donorId];
+
+    // Center protection
+    if (req.session.user.role === "CenterAdmin") {
+      query += " AND center_id = $2";
+      values.push(req.session.user.center_id);
+    }
+
+    const result = await pool.query(query, values);
+
+    if (!result.rows.length)
+      return res.status(404).json({ error: "Donor not found" });
+
+    res.json(result.rows[0]);
+
+  } catch (err) {
+    console.error("Fetch donor error:", err);
+    res.status(500).json({ error: "Error fetching donor" });
+  }
+});
+
+
+/*
+====================================================
+UPDATE DONOR (Restricted Fields Only)
+====================================================
+*/
+router.post("/donors/update/:id", isAuthenticated, async (req, res) => {
+
+  const donorId = req.params.id;
+  const { first_name, last_name, email, city, state, remarks } = req.body;
+
+  try {
+
+    // Validation
+    if (!first_name || !last_name) {
+      return res.status(400).send("First and Last name are required.");
+    }
+
+    if (email) {
+      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+      if (!emailRegex.test(email)) {
+        return res.status(400).send("Invalid email format.");
+      }
+    }
+
+    let query = `
+      UPDATE donors
+      SET first_name=$1,
+          last_name=$2,
+          email=$3,
+          city=$4,
+          state=$5,
+          remarks=$6
+      WHERE id=$7
+    `;
+
+    let values = [
+      first_name.trim(),
+      last_name.trim(),
+      email || null,
+      city || null,
+      state || null,
+      remarks || null,
+      donorId
+    ];
+
+    // Center security
+    if (req.session.user.role === "CenterAdmin") {
+      query += " AND center_id=$8";
+      values.push(req.session.user.center_id);
+    }
+
+    await pool.query(query, values);
+
+    res.redirect("/donors-page");
+
+  } catch (err) {
+    console.error("Donor update error:", err);
+    res.status(500).send("Update failed");
+  }
+});
+
+
+/*
+====================================================
 CREATE NEW DONOR (With Validation + Duplicate Check)
 ====================================================
 */
