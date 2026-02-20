@@ -13,17 +13,22 @@
 }
 
 body {
-  background: linear-gradient(135deg, #F32B56 0%, #ff6f8e 100%);
+  background-color: #f8f9fa;
   min-height: 100vh;
+  display: flex;
+  flex-direction: column;
 }
 
 .login-wrapper {
-  min-height: 100vh;
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .login-card {
   border-radius: 18px;
-  border: none;
+  border-top: 5px solid var(--primary-color);
 }
 
 .login-header {
@@ -62,7 +67,7 @@ body {
 
 .footer-text {
   font-size: 0.9rem;
-  opacity: 0.9;
+  color: #6c757d;
 }
 
 @media (max-width: 576px) {
@@ -75,51 +80,48 @@ body {
 
 <body>
 
-<div class="container-fluid login-wrapper d-flex align-items-center justify-content-center">
+<div class="login-wrapper">
 
-  <div class="row w-100 justify-content-center">
-    <div class="col-11 col-sm-8 col-md-5 col-lg-4">
+  <div class="col-11 col-sm-8 col-md-5 col-lg-4">
 
-      <div class="card shadow-lg login-card">
+    <div class="card shadow-lg login-card">
 
-        <div class="login-header text-center p-4">
-          <h4>Donor Management System</h4>
-          <small>Admin & Center Admin Login</small>
-        </div>
+      <div class="login-header text-center p-4">
+        <h4>Donor Management System</h4>
+        <small>Admin & Center Admin Login</small>
+      </div>
 
-        <div class="card-body p-4">
+      <div class="card-body p-4">
 
-          <form method="POST" action="/login">
+        <form method="POST" action="/login">
 
-            <div class="mb-3">
-              <label class="form-label">Username</label>
-              <input type="text" name="username" class="form-control"
-                placeholder="Enter username" required>
-            </div>
+          <div class="mb-3">
+            <label class="form-label">Username</label>
+            <input type="text" name="username" class="form-control"
+              placeholder="Enter username" required>
+          </div>
 
-            <div class="mb-4">
-              <label class="form-label">Password</label>
-              <input type="password" name="password" class="form-control"
-                placeholder="Enter password" required>
-            </div>
+          <div class="mb-4">
+            <label class="form-label">Password</label>
+            <input type="password" name="password" class="form-control"
+              placeholder="Enter password" required>
+          </div>
 
-            <button type="submit" class="btn btn-login w-100 text-white">
-              Login
-            </button>
+          <button type="submit" class="btn btn-login w-100 text-white">
+            Login
+          </button>
 
-          </form>
-
-        </div>
+        </form>
 
       </div>
 
     </div>
+
   </div>
 
 </div>
 
-<!-- Footer -->
-<footer class="text-center text-white py-3 footer-text">
+<footer class="text-center py-3 footer-text">
  © 2026 Donor App | Powered By KREYA IT CONSULTING LTD | 9582388885 | All Rights Reserved.
 </footer>
 
