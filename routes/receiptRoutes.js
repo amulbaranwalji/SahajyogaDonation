@@ -42,7 +42,7 @@ router.get("/receipt-validate", async (req, res) => {
 
 /*
 =========================================
-GENERATE PROFESSIONAL NGO RECEIPT PDF
+GENERATE SMALL WINE STYLE RECEIPT PDF
 =========================================
 */
 router.get("/receipt-pdf/:receipt/:mobile", async (req, res) => {
@@ -69,7 +69,15 @@ router.get("/receipt-pdf/:receipt/:mobile", async (req, res) => {
 
     const data = result.rows[0];
 
-    const doc = new PDFDocument({ margin: 50 });
+    /* ===============================
+       SMALL RECEIPT SIZE
+       Width: 320
+       Height: 520
+    =============================== */
+    const doc = new PDFDocument({
+      size: [320, 520],
+      margin: 20
+    });
 
     res.setHeader("Content-Type", "application/pdf");
     res.setHeader(
@@ -79,95 +87,113 @@ router.get("/receipt-pdf/:receipt/:mobile", async (req, res) => {
 
     doc.pipe(res);
 
+    const wine = "#722F37";
+
     /* ===============================
-       NGO HEADER
+       OUTER WINE BORDER
     =============================== */
+    doc.rect(5, 5, 310, 510)
+       .lineWidth(3)
+       .stroke(wine);
 
-    doc
-      .fontSize(18)
-      .text(data.center_legal_name.toUpperCase(), { align: "center" });
+    /* ===============================
+       HEADER STRIP
+    =============================== */
+    doc.rect(5, 5, 310, 45)
+       .fill(wine);
 
-    doc.moveDown(0.5);
+    doc.fillColor("white")
+       .fontSize(14)
+       .text("DONATION RECEIPT", 0, 20, { align: "center" });
 
-    doc
-      .fontSize(10)
-      .text(data.center_address, { align: "center" });
+    doc.moveDown(3);
+
+    doc.fillColor("black");
+
+    /* ===============================
+       CENTER DETAILS
+    =============================== */
+    doc.fontSize(11)
+       .text(data.center_legal_name, { align: "center" });
+
+    doc.fontSize(9)
+       .text(data.center_address || "", { align: "center" });
 
     doc.text(
-      `Phone: ${data.center_phone || "-"} | Website: ${data.website || "-"}`,
-      { align: "center" }
+      `Phone: ${data.center_phone || "-"}`
+    , { align: "center" });
+
+    doc.text(
+      `Website: ${data.website || "-"}`
+    , { align: "center" });
+
+    doc.moveDown();
+
+    doc.moveTo(20, doc.y)
+       .lineTo(300, doc.y)
+       .strokeColor(wine)
+       .stroke();
+
+    doc.moveDown();
+
+    /* ===============================
+       RECEIPT DETAILS
+    =============================== */
+    doc.fontSize(10);
+
+    doc.text(`Receipt No: ${data.receipt_number}`);
+    doc.text(
+      `Date: ${new Date(data.donation_date).toLocaleDateString("en-GB")}`
     );
 
     doc.moveDown();
-    doc.moveTo(50, doc.y).lineTo(550, doc.y).stroke();
-    doc.moveDown();
 
-    doc
-      .fontSize(16)
-      .text("DONATION RECEIPT", { align: "center" });
-
-    doc.moveDown();
-    doc.moveTo(50, doc.y).lineTo(550, doc.y).stroke();
-    doc.moveDown();
-
-    /* ===============================
-       RECEIPT INFORMATION (2 COLUMN)
-    =============================== */
-
-    doc.fontSize(11);
-
-    doc.text(`Receipt No: ${data.receipt_number}`, 50, doc.y, {
-      continued: true
-    });
-
-    doc.text(
-      `Date: ${new Date(data.donation_date).toLocaleDateString("en-GB")}`,
-      { align: "right" }
-    );
-
-    doc.moveDown();
-
-    doc.text(`Donor Name: ${data.first_name} ${data.last_name}`, {
-      continued: true
-    });
-
-    doc.text(`Donation Amount: ₹ ${data.donation_amount}`, {
-      align: "right"
-    });
-
-    doc.moveDown();
-
-    /* ===============================
-       DONOR DETAILS
-    =============================== */
-
-    doc.moveDown();
-    doc.fontSize(12).text("Donor Details:", { underline: true });
-    doc.moveDown(0.5);
-
-    doc.fontSize(11);
-    doc.text(`Email: ${data.email || "-"}`);
+    doc.text(`Donor Name: ${data.first_name} ${data.last_name}`);
     doc.text(`Mobile: ${mobile}`);
+    doc.text(`Email: ${data.email || "-"}`);
     doc.text(`Address: ${data.city || ""} ${data.state || ""}`);
 
     doc.moveDown();
 
+    doc.moveTo(20, doc.y)
+       .lineTo(300, doc.y)
+       .strokeColor(wine)
+       .stroke();
+
+    doc.moveDown();
+
     /* ===============================
-       FOOTER SECTION
+       AMOUNT HIGHLIGHT
     =============================== */
+    doc.fillColor(wine)
+       .fontSize(14)
+       .text(`Donation Amount`, { align: "center" });
+
+    doc.moveDown(0.3);
+
+    doc.fontSize(18)
+       .text(`₹ ${data.donation_amount}`, { align: "center" });
+
+    doc.fillColor("black");
 
     doc.moveDown(2);
-    doc.moveTo(50, doc.y).lineTo(550, doc.y).stroke();
+
+    /* ===============================
+       FOOTER
+    =============================== */
+    doc.moveTo(20, doc.y)
+       .lineTo(300, doc.y)
+       .strokeColor(wine)
+       .stroke();
+
     doc.moveDown();
 
-    doc
-      .fontSize(9)
-      .text(
+    doc.fontSize(8)
+       .fillColor("gray")
+       .text(
         "This is a computer generated receipt and does not require a physical signature.",
         { align: "center" }
-      );
-
-    doc.moveDown();
+       );
 
     doc.end();
 
