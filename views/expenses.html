@@ -23,7 +23,7 @@
 
 <body class="d-flex flex-column min-vh-100 bg-light">
 
-<!-- ✅ UPDATED NAVBAR (MATCHES DASHBOARD) -->
+<!-- ✅ NAVBAR (UNCHANGED) -->
 <nav class="navbar navbar-expand-lg navbar-dark bg-dark px-4">
   <a class="navbar-brand d-flex align-items-center" href="/dashboard">
     <img src="/images/logo.png" width="40" height="40" class="me-2">
@@ -43,7 +43,7 @@
   </div>
 </nav>
 
-<!-- TOP TABS (UNCHANGED) -->
+<!-- TABS (UNCHANGED) -->
 <div class="bg-white shadow-sm">
   <div class="container">
     <ul class="nav nav-tabs py-2 flex-nowrap overflow-auto">
@@ -95,6 +95,7 @@ Export CSV
 
 </div>
 
+<!-- TABLE VIEW -->
 <div class="table-view-only">
 <table class="table table-bordered table-striped">
 <thead class="table-dark">
@@ -104,12 +105,14 @@ Export CSV
 <th>Date</th>
 <th>Status</th>
 <th>Submitted By</th>
+<th>Action</th> <!-- ✅ Added -->
 </tr>
 </thead>
 <tbody id="expenseTable"></tbody>
 </table>
 </div>
 
+<!-- CARD VIEW -->
 <div id="expenseCards" class="card-view-only row"></div>
 
 <!-- Pagination -->
@@ -142,6 +145,8 @@ return `${dd}-${mm}-${yyyy}`;
 }
 
 function renderExpenses(){
+
+// TABLE VIEW
 expenseTable.innerHTML = expensesData.map(e => `
 <tr>
 <td>${e.program_name || ''}</td>
@@ -149,9 +154,16 @@ expenseTable.innerHTML = expensesData.map(e => `
 <td>${formatDate(e.expense_date)}</td>
 <td>${e.status || ''}</td>
 <td>${e.submitted_by || ''}</td>
+<td>
+<a href="/edit-expense-page?id=${e.id}" 
+class="btn btn-sm btn-warning">
+Edit
+</a>
+</td>
 </tr>
 `).join('');
 
+// CARD VIEW
 expenseCards.innerHTML = expensesData.map(e => `
 <div class="col-12 col-md-6 col-lg-4">
 <div class="card expense-card shadow-sm">
@@ -161,6 +173,14 @@ expenseCards.innerHTML = expensesData.map(e => `
 <p><strong>Date:</strong> ${formatDate(e.expense_date)}</p>
 <p><strong>Status:</strong> ${e.status || ''}</p>
 <p><strong>Submitted By:</strong> ${e.submitted_by || ''}</p>
+
+<div class="text-end">
+<a href="/edit-expense-page?id=${e.id}" 
+class="btn btn-sm btn-warning">
+Edit
+</a>
+</div>
+
 </div>
 </div>
 </div>
