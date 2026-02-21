@@ -77,6 +77,102 @@ router.get("/expenses-list", isAuthenticated, async (req, res) => {
   }
 });
 
+/*
+====================================================
+GET SINGLE EXPENSE
+====================================================
+*/
+
+router.get("/expenses/:id", isAuthenticated, async (req, res) => {
+
+const expenseId = req.params.id;
+
+try {
+
+let query = "SELECT * FROM expenses WHERE id = $1";
+let values = [expenseId];
+
+if (req.session.user.role === "CenterAdmin") {
+query += " AND center_id = $2";
+values.push(req.session.user.center_id);
+}
+
+const result = await pool.query(query, values);
+
+if(!result.rows.length){
+return res.status(404).json({error:"Expense not found"});
+}
+
+res.json(result.rows[0]);
+
+} catch (err) {
+console.error(err);
+res.status(500).json({error:"Error fetching expense"});
+}
+
+});
+
+/*
+====================================================
+UPDATE SINGLE EXPENSE
+====================================================
+*/
+router.post("/expenses/update/:id", isAuthenticated, async (req, res) => {
+
+const expenseId = req.params.id;
+const {
+program_id,
+expense_amount,
+expense_date,
+status,
+submitted_by,
+remarks
+} = req.body;
+
+try {
+
+if(!expense_amount || parseFloat(expense_amount) <= 0){
+return res.status(400).send("Expense amount must be greater than zero.");
+}
+
+let query = `
+UPDATE expenses
+SET program_id=$1,
+expense_amount=$2,
+expense_date=$3,
+status=$4,
+submitted_by=$5,
+remarks=$6
+WHERE id=$7
+`;
+
+let values = [
+program_id,
+expense_amount,
+expense_date,
+status || null,
+submitted_by || null,
+remarks || null,
+expenseId
+];
+
+if(req.session.user.role === "CenterAdmin"){
+query += " AND center_id=$8";
+values.push(req.session.user.center_id);
+}
+
+await pool.query(query, values);
+
+res.redirect("/expenses-page");
+
+} catch(err){
+console.error(err);
+res.status(500).send("Expense update failed");
+}
+
+});
+
+
 
 /*
 ====================================================
