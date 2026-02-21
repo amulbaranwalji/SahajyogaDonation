@@ -20,7 +20,6 @@ router.get("/donors/search", isAuthenticated, async (req, res) => {
     `;
     let values = [mobile];
 
-    // Center restriction
     if (req.session.user.role === "CenterAdmin") {
       query += " AND center_id = $2";
       values.push(req.session.user.center_id);
@@ -49,6 +48,7 @@ router.get("/donations-list", isAuthenticated, async (req, res) => {
   const offset = (page - 1) * limit;
 
   try {
+
     let baseQuery = `
       FROM donations d
       JOIN donors dn ON d.donor_id = dn.id
@@ -58,13 +58,11 @@ router.get("/donations-list", isAuthenticated, async (req, res) => {
     let conditions = [];
     let values = [];
 
-    // Center filter
     if (req.session.user.role === "CenterAdmin") {
       conditions.push(`d.center_id = $${values.length + 1}`);
       values.push(req.session.user.center_id);
     }
 
-    // Year filter
     if (year && year !== "All") {
       conditions.push(`EXTRACT(YEAR FROM d.donation_date) = $${values.length + 1}`);
       values.push(year);
@@ -74,7 +72,7 @@ router.get("/donations-list", isAuthenticated, async (req, res) => {
       ? " WHERE " + conditions.join(" AND ")
       : "";
 
-    // Total count
+    // TOTAL COUNT
     const totalResult = await pool.query(
       `SELECT COUNT(*) ${baseQuery} ${whereClause}`,
       values
@@ -82,7 +80,7 @@ router.get("/donations-list", isAuthenticated, async (req, res) => {
 
     const total = parseInt(totalResult.rows[0].count);
 
-    // Data query
+    // 🔥 FIXED DATA QUERY (Added dn.mobile)
     const dataQuery = `
       SELECT 
         d.id,
@@ -93,6 +91,7 @@ router.get("/donations-list", isAuthenticated, async (req, res) => {
         d.remarks,
         dn.first_name,
         dn.last_name,
+        dn.mobile,            -- ✅ ADDED THIS LINE
         p.program_name
       ${baseQuery}
       ${whereClause}
@@ -162,13 +161,14 @@ router.post("/donations/new", isAuthenticated, async (req, res) => {
 
 /*
 ====================================================
-EXPORT DONATIONS CSV (CENTER + YEAR SAFE)
+EXPORT DONATIONS CSV
 ====================================================
 */
 router.get("/donations-export", isAuthenticated, async (req, res) => {
   const { year } = req.query;
 
   try {
+
     let baseQuery = `
       FROM donations d
       JOIN donors dn ON d.donor_id = dn.id
@@ -178,13 +178,11 @@ router.get("/donations-export", isAuthenticated, async (req, res) => {
     let conditions = [];
     let values = [];
 
-    // Center filter
     if (req.session.user.role === "CenterAdmin") {
       conditions.push(`d.center_id = $${values.length + 1}`);
       values.push(req.session.user.center_id);
     }
 
-    // Year filter
     if (year && year !== "All") {
       conditions.push(`EXTRACT(YEAR FROM d.donation_date) = $${values.length + 1}`);
       values.push(year);
