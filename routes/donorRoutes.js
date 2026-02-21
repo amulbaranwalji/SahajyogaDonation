@@ -13,20 +13,20 @@ router.get("/donors", isAuthenticated, async (req, res) => {
 
   const { page = 1, search = "" } = req.query;
   const limit = 5;
-  const offset = (page - 1) * limit;
+  const offset = (parseInt(page) - 1) * limit;
 
   try {
 
     let conditions = [];
     let values = [];
 
-    // Center filter
+    // Center filter (Only CenterAdmin restricted)
     if (req.session.user.role === "CenterAdmin") {
       conditions.push(`center_id = $${values.length + 1}`);
       values.push(req.session.user.center_id);
     }
 
-    // Search filter
+    // Search filter (Mobile / First Name / Last Name)
     if (search) {
       conditions.push(`(
         mobile ILIKE $${values.length + 1}
@@ -36,11 +36,11 @@ router.get("/donors", isAuthenticated, async (req, res) => {
       values.push(`%${search}%`);
     }
 
-    let whereClause = conditions.length
+    const whereClause = conditions.length
       ? " WHERE " + conditions.join(" AND ")
       : "";
 
-    // Total count
+    // TOTAL COUNT
     const totalResult = await pool.query(
       `SELECT COUNT(*) FROM donors ${whereClause}`,
       values
@@ -48,7 +48,7 @@ router.get("/donors", isAuthenticated, async (req, res) => {
 
     const total = parseInt(totalResult.rows[0].count);
 
-    // Data query
+    // DATA QUERY
     const dataQuery = `
       SELECT *
       FROM donors
@@ -90,6 +90,7 @@ router.get("/donors/:id", isAuthenticated, async (req, res) => {
     let query = "SELECT * FROM donors WHERE id = $1";
     let values = [donorId];
 
+    // Restrict CenterAdmin to own center
     if (req.session.user.role === "CenterAdmin") {
       query += " AND center_id = $2";
       values.push(req.session.user.center_id);
@@ -112,7 +113,7 @@ router.get("/donors/:id", isAuthenticated, async (req, res) => {
 
 /*
 ====================================================
-UPDATE DONOR (Restricted Fields Only)
+UPDATE DONOR (Restricted Editable Fields)
 ====================================================
 */
 router.post("/donors/update/:id", isAuthenticated, async (req, res) => {
@@ -122,10 +123,12 @@ router.post("/donors/update/:id", isAuthenticated, async (req, res) => {
 
   try {
 
+    // Mandatory validation
     if (!first_name || !last_name) {
       return res.status(400).send("First and Last name are required.");
     }
 
+    // Email validation (if provided)
     if (email) {
       const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
       if (!emailRegex.test(email)) {
@@ -154,8 +157,9 @@ router.post("/donors/update/:id", isAuthenticated, async (req, res) => {
       donorId
     ];
 
+    // Restrict CenterAdmin to own center
     if (req.session.user.role === "CenterAdmin") {
-      query += ` AND center_id = $8`;
+      query += " AND center_id = $8";
       values.push(req.session.user.center_id);
     }
 
@@ -182,15 +186,18 @@ router.post("/donors/new", isAuthenticated, async (req, res) => {
 
   try {
 
+    // Mandatory validation
     if (!first_name || !last_name || !mobile) {
       return res.status(400).send("First Name, Last Name and Mobile are mandatory.");
     }
 
+    // Mobile validation (10 digits)
     const mobileRegex = /^[0-9]{10}$/;
     if (!mobileRegex.test(mobile)) {
       return res.status(400).send("Mobile number must be exactly 10 digits.");
     }
 
+    // Email validation (if provided)
     if (email) {
       const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
       if (!emailRegex.test(email)) {
@@ -200,8 +207,8 @@ router.post("/donors/new", isAuthenticated, async (req, res) => {
 
     await pool.query(
       `INSERT INTO donors
-      (donor_id, first_name, last_name, email, mobile, city, state, remarks, center_id)
-      VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9)`,
+       (donor_id, first_name, last_name, email, mobile, city, state, remarks, center_id)
+       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9)`,
       [
         donorId,
         first_name.trim(),
@@ -219,6 +226,7 @@ router.post("/donors/new", isAuthenticated, async (req, res) => {
 
   } catch (err) {
 
+    // Unique mobile constraint
     if (err.code === "23505") {
       return res.status(400).send("This mobile number is already registered in your center.");
     }
@@ -226,6 +234,7 @@ router.post("/donors/new", isAuthenticated, async (req, res) => {
     console.error("Donor create error:", err);
     res.status(500).send("Donor creation failed.");
   }
+
 });
 
 export default router;
