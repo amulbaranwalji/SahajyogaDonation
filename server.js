@@ -109,6 +109,10 @@ app.get("/edit-donation-page", (req, res) =>
   res.sendFile(path.join(__dirname, "views", "edit-donation.html"))
 );
 
+app.get("/edit-expense-page", (req, res) =>
+  res.sendFile(path.join(__dirname, "views", "edit-expense.html"))
+);
+
 
 // ===============================
 // REGISTER API ROUTES
