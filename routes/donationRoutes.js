@@ -158,6 +158,63 @@ router.post("/donations/new", isAuthenticated, async (req, res) => {
   }
 });
 
+/*
+====================================================
+UPDATE DONATION
+====================================================
+*/
+router.post("/donations/update/:id", isAuthenticated, async (req, res) => {
+
+  const donationId = req.params.id;
+
+  const {
+    program_id,
+    donation_amount,
+    donation_date,
+    payment_mode,
+    remarks
+  } = req.body;
+
+  try {
+
+    if (!donation_amount || parseFloat(donation_amount) <= 0) {
+      return res.status(400).send("Donation amount must be greater than zero.");
+    }
+
+    let query = `
+      UPDATE donations
+      SET program_id = $1,
+          donation_amount = $2,
+          donation_date = $3,
+          payment_mode = $4,
+          remarks = $5
+      WHERE id = $6
+    `;
+
+    let values = [
+      program_id,
+      donation_amount,
+      donation_date,
+      payment_mode,
+      remarks || null,
+      donationId
+    ];
+
+    // Center restriction (IMPORTANT)
+    if (req.session.user.role === "CenterAdmin") {
+      query += " AND center_id = $7";
+      values.push(req.session.user.center_id);
+    }
+
+    await pool.query(query, values);
+
+    res.redirect("/donations-page");
+
+  } catch (err) {
+    console.error("Donation update error:", err);
+    res.status(500).send("Donation update failed.");
+  }
+});
 
 
 /*
