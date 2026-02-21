@@ -159,6 +159,56 @@ router.post("/donations/new", isAuthenticated, async (req, res) => {
 });
 
 
+
+/*
+====================================================
+GET SINGLE DONATION (FOR EDIT PAGE)
+====================================================
+*/
+router.get("/donations/:id", isAuthenticated, async (req, res) => {
+
+  const donationId = req.params.id;
+
+  try {
+
+    let query = `
+      SELECT 
+        d.*,
+        dn.first_name,
+        dn.last_name,
+        dn.mobile,
+        p.program_name
+      FROM donations d
+      JOIN donors dn ON d.donor_id = dn.id
+      LEFT JOIN programs p ON d.program_id = p.id
+      WHERE d.id = $1
+    `;
+
+    let values = [donationId];
+
+    // Center restriction (VERY IMPORTANT)
+    if (req.session.user.role === "CenterAdmin") {
+      query += " AND d.center_id = $2";
+      values.push(req.session.user.center_id);
+    }
+
+    const result = await pool.query(query, values);
+
+    if (!result.rows.length) {
+      return res.status(404).json({ error: "Donation not found" });
+    }
+
+    res.json(result.rows[0]);
+
+  } catch (err) {
+    console.error("Fetch donation error:", err);
+    res.status(500).json({ error: "Error fetching donation" });
+  }
+});
+
+
+
+
 /*
 ====================================================
 EXPORT DONATIONS CSV
