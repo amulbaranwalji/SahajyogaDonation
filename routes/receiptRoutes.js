@@ -36,13 +36,12 @@ router.get("/receipt-validate", async (req, res) => {
     console.error(err);
     res.json({ valid: false });
   }
-
 });
 
 
 /*
 =========================================
-GENERATE SMALL WINE STYLE RECEIPT PDF
+PROFESSIONAL NGO RECEIPT (IMPROVED UI)
 =========================================
 */
 router.get("/receipt-pdf/:receipt/:mobile", async (req, res) => {
@@ -71,12 +70,11 @@ router.get("/receipt-pdf/:receipt/:mobile", async (req, res) => {
 
     /* ===============================
        SMALL RECEIPT SIZE
-       Width: 320
-       Height: 520
+       (Thermal style, not A4)
     =============================== */
     const doc = new PDFDocument({
-      size: [320, 520],
-      margin: 20
+      size: [320, 560],
+      margin: 25
     });
 
     res.setHeader("Content-Type", "application/pdf");
@@ -90,34 +88,40 @@ router.get("/receipt-pdf/:receipt/:mobile", async (req, res) => {
     const wine = "#722F37";
 
     /* ===============================
-       OUTER WINE BORDER
+       CLEAN OUTER BORDER
     =============================== */
-    doc.rect(5, 5, 310, 510)
-       .lineWidth(3)
-       .stroke(wine);
+    doc
+      .rect(10, 10, 300, 540)
+      .lineWidth(2)
+      .stroke(wine);
 
     /* ===============================
-       HEADER STRIP
+       HEADER BAR
     =============================== */
-    doc.rect(5, 5, 310, 45)
-       .fill(wine);
+    doc
+      .rect(10, 10, 300, 50)
+      .fill(wine);
 
-    doc.fillColor("white")
-       .fontSize(14)
-       .text("DONATION RECEIPT", 0, 20, { align: "center" });
+    doc
+      .fillColor("white")
+      .fontSize(16)
+      .text("DONATION RECEIPT", 0, 28, { align: "center" });
 
-    doc.moveDown(3);
-
+    doc.moveDown(4);
     doc.fillColor("black");
 
     /* ===============================
        CENTER DETAILS
     =============================== */
-    doc.fontSize(11)
-       .text(data.center_legal_name, { align: "center" });
+    doc
+      .fontSize(12)
+      .font("Helvetica-Bold")
+      .text(data.center_legal_name, { align: "center" });
 
-    doc.fontSize(9)
-       .text(data.center_address || "", { align: "center" });
+    doc
+      .fontSize(9)
+      .font("Helvetica")
+      .text(data.center_address || "", { align: "center" });
 
     doc.text(
       `Phone: ${data.center_phone || "-"}`
@@ -127,17 +131,17 @@ router.get("/receipt-pdf/:receipt/:mobile", async (req, res) => {
       `Website: ${data.website || "-"}`
     , { align: "center" });
 
-    doc.moveDown();
+    doc.moveDown(1);
 
-    doc.moveTo(20, doc.y)
-       .lineTo(300, doc.y)
-       .strokeColor(wine)
-       .stroke();
+    doc
+      .moveTo(25, doc.y)
+      .lineTo(295, doc.y)
+      .stroke(wine);
 
-    doc.moveDown();
+    doc.moveDown(1);
 
     /* ===============================
-       RECEIPT DETAILS
+       RECEIPT INFO SECTION
     =============================== */
     doc.fontSize(10);
 
@@ -153,47 +157,50 @@ router.get("/receipt-pdf/:receipt/:mobile", async (req, res) => {
     doc.text(`Email: ${data.email || "-"}`);
     doc.text(`Address: ${data.city || ""} ${data.state || ""}`);
 
-    doc.moveDown();
+    doc.moveDown(1);
 
-    doc.moveTo(20, doc.y)
-       .lineTo(300, doc.y)
-       .strokeColor(wine)
-       .stroke();
+    doc
+      .moveTo(25, doc.y)
+      .lineTo(295, doc.y)
+      .stroke(wine);
 
-    doc.moveDown();
+    doc.moveDown(1.5);
 
     /* ===============================
-       AMOUNT HIGHLIGHT
+       DONATION AMOUNT (HIGHLIGHTED)
     =============================== */
-    doc.fillColor(wine)
-       .fontSize(14)
-       .text(`Donation Amount`, { align: "center" });
+    doc
+      .font("Helvetica-Bold")
+      .fontSize(14)
+      .fillColor(wine)
+      .text("Donation Amount", { align: "center" });
 
-    doc.moveDown(0.3);
+    doc.moveDown(0.5);
 
-    doc.fontSize(18)
-       .text(`₹ ${data.donation_amount}`, { align: "center" });
+    doc
+      .fontSize(22)
+      .text(`₹ ${parseFloat(data.donation_amount).toFixed(2)}`, { align: "center" });
 
     doc.fillColor("black");
-
     doc.moveDown(2);
 
     /* ===============================
-       FOOTER
+       FOOTER NOTE
     =============================== */
-    doc.moveTo(20, doc.y)
-       .lineTo(300, doc.y)
-       .strokeColor(wine)
-       .stroke();
+    doc
+      .moveTo(25, doc.y)
+      .lineTo(295, doc.y)
+      .stroke(wine);
 
-    doc.moveDown();
+    doc.moveDown(1);
 
-    doc.fontSize(8)
-       .fillColor("gray")
-       .text(
+    doc
+      .fontSize(8)
+      .fillColor("gray")
+      .text(
         "This is a computer generated receipt and does not require a physical signature.",
         { align: "center" }
-       );
+      );
 
     doc.end();
 
