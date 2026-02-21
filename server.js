@@ -105,6 +105,9 @@ app.get("/receipt-verify", (req, res) =>
   res.sendFile(path.join(__dirname, "views", "receipt-verify.html"))
 );
 
+app.get("/edit-donation-page", (req, res) =>
+  res.sendFile(path.join(__dirname, "views", "edit-donation.html"))
+);
 
 
 // ===============================
