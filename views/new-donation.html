@@ -50,25 +50,30 @@
 </div>
 
 <div class="card-body">
-<form method="POST" action="/donations/new">
+<form method="POST" action="/donations/new" onsubmit="return validateDonationForm()">
 
 <!-- DONOR SEARCH -->
 <div class="mb-3">
 <label>Donor Mobile</label>
-<input type="text" id="mobileSearch" class="form-control mb-2" placeholder="Search Donor by Mobile">
+<input type="text" id="mobileSearch" class="form-control mb-2" placeholder="Enter Mobile (10 digits)">
 <button type="button" class="btn btn-primary w-100 mb-3" onclick="searchDonor()">Search</button>
+
 <div id="donorInfo" class="alert alert-info d-none"></div>
 <input type="hidden" name="donor_id" id="donor_id">
 </div>
 
 <!-- AMOUNT -->
-<input type="number" name="donation_amount" class="form-control mb-3"
-placeholder="Donation Amount" required>
+<input type="number" name="donation_amount" id="donation_amount"
+class="form-control mb-3"
+placeholder="Donation Amount"
+min="1"
+required>
 
 <!-- DATE -->
-<input type="date" name="donation_date" class="form-control mb-3" required>
+<input type="date" name="donation_date"
+class="form-control mb-3" required>
 
-<!-- PROGRAM DROPDOWN (FIXED) -->
+<!-- PROGRAM DROPDOWN -->
 <select name="program_id" id="programDropdown"
 class="form-select mb-3" required>
 <option value="">Select Program</option>
@@ -107,37 +112,66 @@ placeholder="Remarks"></textarea>
 <script>
 /*
 ====================================
-SEARCH DONOR
+SEARCH DONOR (FIXED)
 ====================================
 */
-function searchDonor(){
-let mobile = document.getElementById("mobileSearch").value;
+async function searchDonor(){
 
-fetch(`/donors/search?mobile=${mobile}`)
-.then(res=>res.json())
-.then(data=>{
-if(data.length>0){
-let d = data[0];
+  let mobile = document.getElementById("mobileSearch").value.trim();
 
-document.getElementById("donor_id").value = d.id;
+  if(!/^[0-9]{10}$/.test(mobile)){
+    alert("Please enter valid 10 digit mobile number");
+    return;
+  }
 
-let infoDiv = document.getElementById("donorInfo");
-infoDiv.innerHTML =
-`<strong>${d.first_name} ${d.last_name}</strong><br>
-Email: ${d.email || '-'}<br>
-Mobile: ${d.mobile || '-'}`;
+  const res = await fetch(`/donors?search=${mobile}`);
+  const data = await res.json();
 
-infoDiv.classList.remove("d-none");
+  if(data.length > 0){
 
-} else {
-alert("Donor not found");
-}
-});
+    let d = data[0];
+
+    document.getElementById("donor_id").value = d.id;
+
+    let infoDiv = document.getElementById("donorInfo");
+    infoDiv.innerHTML =
+    `<strong>${d.first_name} ${d.last_name}</strong><br>
+     Email: ${d.email || '-'}<br>
+     Mobile: ${d.mobile}`;
+
+    infoDiv.classList.remove("d-none");
+
+  } else {
+    alert("Donor not found");
+  }
 }
 
 /*
 ====================================
-LOAD PROGRAM DROPDOWN (FIXED)
+VALIDATION
+====================================
+*/
+function validateDonationForm(){
+
+  const donorId = document.getElementById("donor_id").value;
+  const amount = document.getElementById("donation_amount").value;
+
+  if(!donorId){
+    alert("Please search and select donor first.");
+    return false;
+  }
+
+  if(parseFloat(amount) <= 0){
+    alert("Donation amount must be greater than zero.");
+    return false;
+  }
+
+  return true;
+}
+
+/*
+====================================
+LOAD PROGRAM DROPDOWN
 ====================================
 */
 fetch('/programs-dropdown')
