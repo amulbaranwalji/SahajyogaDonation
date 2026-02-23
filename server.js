@@ -84,6 +84,9 @@ app.get("/programs-page", requireLogin, (req, res) =>
 app.get("/new-program-page", requireLogin, (req, res) =>
   res.sendFile(path.join(__dirname, "views", "new-program.html"))
 );
+app.get("/edit-program-page", requireLogin, (req, res) =>
+  res.sendFile(path.join(__dirname, "views", "edit-program.html"))
+);
 
 app.get("/donations-page", requireLogin, (req, res) =>
   res.sendFile(path.join(__dirname, "views", "donations.html"))
