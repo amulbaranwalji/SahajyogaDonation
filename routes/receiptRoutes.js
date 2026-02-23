@@ -167,7 +167,7 @@ router.get("/receipt-pdf/:receipt/:mobile", async (req, res) => {
 
     doc
       .fontSize(28)
-      .text(`₹ ${parseFloat(data.donation_amount).toFixed(2)}`, boxX + 20, boxY + 60);
+      .text('INR ${parseFloat(data.donation_amount).toFixed(2)}', boxX + 20, boxY + 60);
 
     doc.fillColor("black");
 
