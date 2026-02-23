@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>Edit Program</title>
+<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+
+<style>
+body { background:#f4f6f9; }
+.card { border-radius:15px; }
+</style>
+</head>
+
+<body>
+
+<div class="container mt-5">
+<div class="card shadow mx-auto" style="max-width:600px;">
+<div class="card-header bg-dark text-white text-center">
+<h5>Edit Program</h5>
+</div>
+
+<div class="card-body">
+
+<div id="errorMsg" class="alert alert-danger d-none"></div>
+<div id="successMsg" class="alert alert-success d-none"></div>
+
+<div class="mb-3">
+<label class="form-label">Program Name</label>
+<input type="text" id="program_name" class="form-control">
+</div>
+
+<div class="mb-3">
+<label class="form-label">Description</label>
+<textarea id="description" class="form-control" rows="3"></textarea>
+</div>
+
+<div class="mb-3">
+<label class="form-label">Program Date</label>
+<input type="date" id="program_date" class="form-control">
+</div>
+
+<button class="btn btn-success w-100" onclick="updateProgram()">
+Update Program
+</button>
+
+</div>
+</div>
+</div>
+
+<script>
+
+const params = new URLSearchParams(window.location.search);
+const programId = params.get("id");
+
+/*
+====================================
+LOAD PROGRAM DATA
+====================================
+*/
+async function loadProgram(){
+
+  try{
+
+    const res = await fetch(`/programs/${programId}`);
+    const data = await res.json();
+
+    document.getElementById("program_name").value = data.program_name;
+    document.getElementById("description").value = data.description;
+    document.getElementById("program_date").value =
+      data.program_date?.split("T")[0];
+
+  }catch(err){
+    showError("Failed to load program");
+  }
+}
+
+/*
+====================================
+UPDATE PROGRAM
+====================================
+*/
+async function updateProgram(){
+
+  const program_name =
+    document.getElementById("program_name").value.trim();
+
+  const description =
+    document.getElementById("description").value.trim();
+
+  const program_date =
+    document.getElementById("program_date").value;
+
+  if(!program_name || !program_date){
+    showError("Program name and date required.");
+    return;
+  }
+
+  try{
+
+    const res = await fetch(`/programs/${programId}`, {
+      method:"PUT",
+      headers:{ "Content-Type":"application/json" },
+      body: JSON.stringify({
+        program_name,
+        description,
+        program_date
+      })
+    });
+
+    const result = await res.json();
+
+    if(result.success){
+      document.getElementById("successMsg").innerText =
+        "Program updated successfully.";
+      document.getElementById("successMsg")
+        .classList.remove("d-none");
+
+      setTimeout(()=>{
+        window.location.href = "/programs-page";
+      },1500);
+
+    }else{
+      showError("Update failed.");
+    }
+
+  }catch(err){
+    showError("Error updating program.");
+  }
+
+}
+
+function showError(msg){
+  document.getElementById("errorMsg").innerText = msg;
+  document.getElementById("errorMsg")
+    .classList.remove("d-none");
+}
+
+loadProgram();
+
+</script>
+
+</body>
+</html>
