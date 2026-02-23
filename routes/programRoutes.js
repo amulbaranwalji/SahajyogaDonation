@@ -106,6 +106,84 @@ router.get("/programs-dropdown", isAuthenticated, async (req, res) => {
 
 });
 
+/*
+====================================================
+GET SINGLE PROGRAM
+====================================================
+*/
+router.get("/programs/:id", isAuthenticated, async (req, res) => {
+
+  const { id } = req.params;
+
+  try {
+
+    let query = `SELECT * FROM programs WHERE id = $1`;
+    let values = [id];
+
+    // Restrict CenterAdmin
+    if (req.session.user.role === "CenterAdmin") {
+      query += ` AND center_id = $2`;
+      values.push(req.session.user.center_id);
+    }
+
+    const result = await pool.query(query, values);
+
+    if (result.rows.length === 0) {
+      return res.status(404).json({ error: "Not found" });
+    }
+
+    res.json(result.rows[0]);
+
+  } catch (err) {
+    console.error("Fetch single program error:", err);
+    res.status(500).json({ error: "Error loading program" });
+  }
+
+});
+
+/*
+====================================================
+UPDATE PROGRAM
+====================================================
+*/
+router.put("/programs/:id", isAuthenticated, async (req, res) => {
+
+  const { id } = req.params;
+  const { program_name, description, program_date } = req.body;
+
+  try {
+
+    let query = `
+      UPDATE programs
+      SET program_name = $1,
+          description = $2,
+          program_date = $3
+      WHERE id = $4
+    `;
+
+    let values = [
+      program_name,
+      description,
+      program_date,
+      id
+    ];
+
+    if (req.session.user.role === "CenterAdmin") {
+      query += ` AND center_id = $5`;
+      values.push(req.session.user.center_id);
+    }
+
+    const result = await pool.query(query, values);
+
+    res.json({ success: true });
+
+  } catch (err) {
+    console.error("Program update error:", err);
+    res.status(500).json({ success: false });
+  }
+
+});
+
 
 /*
 ====================================================
