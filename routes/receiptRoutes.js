@@ -71,7 +71,7 @@ router.get("/receipt-pdf/:receipt/:mobile", async (req, res) => {
 
     // Landscape style layout
     const doc = new PDFDocument({
-      size: [600, 350],
+      size: [600, 380],
       margin: 40
     });
 
